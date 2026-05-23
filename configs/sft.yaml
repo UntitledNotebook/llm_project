@@ -1,0 +1,36 @@
+# Choice A / Part 1: SFT config.
+# Edit paths and batch sizes here; DeepSpeed-specific memory knobs live in configs/deepspeed_zero2.json.
+run_name: sft_qwen25_1p5b_numina_gsm8k
+seed: 42
+
+model:
+  name_or_path: Qwen/Qwen2.5-1.5B-Base
+  trust_remote_code: true
+  dtype: bf16
+  attn_implementation: flash_attention_2  # change to eager if flash-attn is unavailable
+  gradient_checkpointing: true
+
+dataset:
+  name: AI-MO/NuminaMath-CoT
+  split: train
+  source_filter: gsm8k
+  prompt_field_candidates: [problem, question, prompt]
+  response_field_candidates: [solution, answer, response]
+  validation_size: 256
+  max_train_samples: null    # set to a small integer for debugging
+  max_eval_samples: 256
+  max_seq_length: 2048
+
+train:
+  output_dir: outputs/sft_qwen25_1p5b_numina_gsm8k
+  per_device_train_batch_size: 1
+  per_device_eval_batch_size: 1
+  num_train_epochs: 3
+  learning_rate: 2.0e-5
+  weight_decay: 0.0
+  warmup_ratio: 0.03
+  max_grad_norm: 1.0
+  logging_steps: 5
+  eval_steps: 100
+  save_steps: 500
+  save_hf_at_end: true

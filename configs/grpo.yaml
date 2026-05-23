@@ -1,0 +1,52 @@
+# Choice A / Part 2: GRPO config.
+# This framework uses Hugging Face generation for rollouts. vLLM rollout acceleration is intentionally omitted
+# because it belongs to the open-exploration direction, not Part 2.
+run_name: grpo_qwen25_1p5b_gsm8k
+seed: 1234
+
+model:
+  name_or_path: Qwen/Qwen2.5-1.5B-Base
+  # For RL-after-SFT, point this at outputs/sft_qwen25_1p5b_numina_gsm8k/hf.
+  init_from_sft_checkpoint: null
+  reference_model_name_or_path: Qwen/Qwen2.5-1.5B-Base
+  trust_remote_code: true
+  dtype: bf16
+  attn_implementation: flash_attention_2
+  gradient_checkpointing: true
+
+dataset:
+  name: openai/gsm8k
+  config_name: main
+  train_split: train
+  test_split: test
+  max_prompt_length: 768
+  max_train_samples: null
+  max_eval_samples: 256
+
+rollout:
+  group_size: 4
+  max_new_tokens: 512
+  temperature: 0.8
+  top_p: 0.95
+  do_sample: true
+
+reward:
+  correct_answer_reward: 1.0
+  wrong_answer_reward: 0.0
+  format_reward: 0.05
+  require_final_answer_marker: false
+
+train:
+  output_dir: outputs/grpo_qwen25_1p5b_gsm8k
+  per_device_prompt_batch_size: 1
+  num_train_epochs: 1
+  learning_rate: 1.0e-6
+  weight_decay: 0.0
+  warmup_ratio: 0.03
+  clip_range: 0.2
+  beta_kl: 0.02
+  max_grad_norm: 1.0
+  logging_steps: 1
+  eval_steps: 100
+  save_steps: 250
+  save_hf_at_end: true

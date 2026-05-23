@@ -1,0 +1,24 @@
+model:
+  name_or_path: Qwen/Qwen2.5-1.5B-Base
+  trust_remote_code: true
+  dtype: bf16
+  attn_implementation: flash_attention_2
+
+gsm8k:
+  dataset_name: openai/gsm8k
+  config_name: main
+  split: test
+  max_samples: null
+  batch_size: 4
+  max_new_tokens: 512
+  temperature: 0.0
+  top_p: 1.0
+  output_path: outputs/eval/gsm8k.json
+
+mmlu:
+  dataset_name: cais/mmlu
+  split: test
+  subjects: all
+  max_samples_per_subject: null
+  batch_size: 1
+  output_path: outputs/eval/mmlu.json

@@ -1,0 +1,45 @@
+[build-system]
+requires = ["setuptools>=69", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "llm-choice-a-posttraining"
+version = "0.1.0"
+description = "Course project Choice A framework: SFT and GRPO for Qwen2.5-1.5B-Base"
+readme = "README.md"
+requires-python = ">=3.10,<3.11"
+license = {text = "MIT"}
+authors = [{name = "Course Project Student"}]
+# Heavy CUDA packages are installed explicitly in env_setup.md so that the
+# PyTorch / CUDA / flash-attn wheel tags can be chosen correctly.
+dependencies = [
+    "transformers==4.51.1",
+    "datasets>=2.20.0",
+    "torchdata",
+    "deepspeed>=0.14.0",
+    "accelerate>=0.30.0",
+    "evaluate>=0.4.2",
+    "sentencepiece>=0.2.0",
+    "protobuf>=4.25.0",
+    "safetensors>=0.4.3",
+    "numpy>=1.26.0",
+    "pandas>=2.2.0",
+    "pyyaml>=6.0.1",
+    "tqdm>=4.66.0",
+    "matplotlib>=3.8.0",
+    "scikit-learn>=1.4.0",
+    "packaging>=24.0",
+    "tensorboard>=2.16.0",
+    "ninja>=1.11.1",
+    "vllm==0.9.0"
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8.0.0", "ruff>=0.4.0"]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
