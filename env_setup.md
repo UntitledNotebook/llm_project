@@ -2,7 +2,11 @@
 
 This project targets Choice A Part 1 and Part 2 only: SFT and GRPO. The course PDF recommends Python 3.10, `vllm==0.9.0`, `transformers==4.51.1`, `datasets`, `torchdata`, `deepspeed`, and a pre-built `flash-attn` wheel that matches CUDA/PyTorch/Python/CXX11 ABI.
 
-The server information you provided is an 8 × RTX 4090 machine with NVIDIA driver `550.54.14` and `nvidia-smi` reporting CUDA `12.4`. The most important rule is that the flash-attn wheel must match the **actual PyTorch runtime** reported by `torch.version.cuda`, not just the CUDA version shown by `nvidia-smi`.
+For this RTX 4090 server, use the CUDA 12.4-compatible PyTorch 2.6 stack instead of the course's PyTorch 2.7 example. `nvidia-smi` reports driver `550.54.14` and CUDA `12.4`; official PyTorch 2.6 wheels include a `cu124` build, while the PyTorch 2.7 wheels do not. Because `vllm==0.9.0` hard-pins `torch==2.7.0`, this environment uses `vllm==0.8.5`, which hard-pins `torch==2.6.0`.
+
+Use `flash-attn==2.8.2` for this machine. The official Dao-AILab `2.8.2` pre-built `cu12torch2.6` wheels were tested here and failed to import against `torch==2.6.0+cu124` with an undefined `c10::Error(...std::__cxx11...)` symbol, so the verified path is to build `2.8.2` locally against the installed PyTorch ABI.
+
+The most important flash-attn rule is that the wheel must match the **actual PyTorch runtime** reported by `torch.version.cuda`, the Python tag, and `torch._C._GLIBCXX_USE_CXX11_ABI`. Flash-attn release wheels use CUDA-major tags such as `cu12`, even when PyTorch was installed from the `cu124` index.
 
 ## 1. Create a clean Python 3.10 virtual environment
 
@@ -21,21 +25,11 @@ Expected Python line: `Python 3.10.x`.
 
 ## 2. Install PyTorch first
 
-The course flash-attn example uses a `torch2.7` wheel tag, so start with PyTorch 2.7.0. Official PyTorch 2.7.0 Linux wheels are provided for CUDA 11.8, 12.6, and 12.8; there is no official `cu124` PyTorch 2.7.0 wheel. Because your driver reports CUDA 12.4, the CUDA 12.6 wheel may require a newer driver on some systems. Try CUDA 12.6 first if your cluster supports it; otherwise use CUDA 11.8 or ask the admin to upgrade the driver.
-
-Preferred course-aligned attempt:
+Use PyTorch 2.6.0 from the official CUDA 12.4 wheel index:
 
 ```bash
-uv pip install --index-url https://download.pytorch.org/whl/cu126 \
-  torch==2.7.0 torchvision==0.22.0 torchaudio==2.7.0
-```
-
-Fallback if CUDA initialization fails with a driver/runtime error:
-
-```bash
-uv pip uninstall -y torch torchvision torchaudio
-uv pip install --index-url https://download.pytorch.org/whl/cu118 \
-  torch==2.7.0 torchvision==0.22.0 torchaudio==2.7.0
+uv pip install --index-url https://download.pytorch.org/whl/cu124 \
+  torch==2.6.0 torchvision==0.21.0 torchaudio==2.6.0
 ```
 
 Check the installed PyTorch runtime:
@@ -66,38 +60,48 @@ DS_BUILD_OPS=0 uv pip install -r requirements/base.txt
 uv pip install -e . --no-deps
 ```
 
-## 4. Determine and install the correct flash-attn wheel
+`requirements/base.txt` intentionally uses `vllm==0.8.5` for this environment because `vllm==0.9.0` would replace PyTorch 2.6 with PyTorch 2.7.
 
-Run the helper after PyTorch is installed:
+## 4. Install flash-attn 2.8.2
+
+The helper can still show the official Dao-AILab wheel filename for inspection:
 
 ```bash
 python scripts/resolve_flash_attn_wheel.py
 ```
 
-It prints a filename like one of these:
+For Python 3.10 + PyTorch 2.6 + CUDA-major-12 + CXX11 ABI false, it prints:
 
 ```text
-flash_attn-2.8.2+cu12torch2.7cxx11abiFALSE-cp310-cp310-linux_x86_64.whl
-flash_attn-2.8.2+cu11torch2.7cxx11abiFALSE-cp310-cp310-linux_x86_64.whl
+flash_attn-2.8.2+cu12torch2.6cxx11abiFALSE-cp310-cp310-linux_x86_64.whl
 ```
 
-Download and install exactly that wheel from the Dao-AILab release:
+On this Ubuntu 22.04 / CUDA 12.4 machine, both official `2.8.2` `cxx11abiFALSE` and `cxx11abiTRUE` wheels were tested and failed with the same `std::__cxx11` PyTorch C++ symbol mismatch. Build from source instead so the extension is compiled against the installed `torch==2.6.0+cu124` ABI:
 
 ```bash
-FLASH_ATTN_VERSION=2.8.2
-WHEEL=$(python scripts/resolve_flash_attn_wheel.py --filename-only --flash-version ${FLASH_ATTN_VERSION})
-wget -c "https://github.com/Dao-AILab/flash-attention/releases/download/v${FLASH_ATTN_VERSION}/${WHEEL}"
-uv pip install "./${WHEEL}" --no-build-isolation
+FLASH_ATTENTION_FORCE_BUILD=TRUE \
+TORCH_CUDA_ARCH_LIST=8.9 \
+MAX_JOBS=16 \
+NVCC_THREADS=4 \
+UV_LINK_MODE=copy \
+uv pip install flash-attn==2.8.2 \
+  --no-build-isolation \
+  --no-deps \
+  --reinstall \
+  --no-binary flash-attn \
+  --no-cache
 ```
 
-The course PDF example for Python 3.10 + PyTorch 2.7 + CUDA-major-12 + CXX11 ABI false is:
+Verify the import:
 
 ```bash
-wget -c "https://github.com/Dao-AILab/flash-attention/releases/download/v2.8.2/flash_attn-2.8.2+cu12torch2.7cxx11abiFALSE-cp310-cp310-linux_x86_64.whl"
-uv pip install "./flash_attn-2.8.2+cu12torch2.7cxx11abiFALSE-cp310-cp310-linux_x86_64.whl" --no-build-isolation
+python - <<'VERIFY_PY'
+import torch, flash_attn, flash_attn_2_cuda
+print("torch:", torch.__version__, torch.version.cuda, torch._C._GLIBCXX_USE_CXX11_ABI)
+print("flash_attn:", flash_attn.__version__)
+print("extension:", flash_attn_2_cuda.__file__)
+VERIFY_PY
 ```
-
-If the release page does not contain your exact filename, change PyTorch/Python to a tag that has a pre-built wheel. Compiling flash-attn from source is intentionally avoided because it can take a long time.
 
 ## 5. Verify the full stack
 
@@ -107,7 +111,7 @@ python scripts/doctor.py
 python - <<'PY'
 import torch
 from transformers import AutoTokenizer, AutoModelForCausalLM
-model_name = "Qwen/Qwen2.5-1.5B-Base"
+model_name = "Qwen/Qwen2.5-1.5B"
 tok = AutoTokenizer.from_pretrained(model_name, trust_remote_code=True)
 model = AutoModelForCausalLM.from_pretrained(
     model_name,
@@ -124,10 +128,12 @@ PY
 
 ## 6. Common fixes
 
-`CUDA driver version is insufficient for CUDA runtime version`: install the `cu118` PyTorch 2.7 wheel or upgrade the NVIDIA driver before using `cu126`/`cu128`.
+`CUDA driver version is insufficient for CUDA runtime version`: verify that PyTorch is installed from the `cu124` index. Reinstall with the command in section 2 if another CUDA runtime was selected.
 
-`undefined symbol` or `GLIBCXX` errors from `flash_attn_2_cuda`: the flash-attn wheel does not match your PyTorch CXX11 ABI or CUDA tag. Re-run `python scripts/resolve_flash_attn_wheel.py` and install the exact wheel.
+`undefined symbol` or `GLIBCXX` errors from `flash_attn_2_cuda`: the flash-attn binary does not match your PyTorch CXX11 ABI or CUDA tag. On this machine, build `flash-attn==2.8.2` from source with the command in section 4.
 
 `ImportError: flash_attn`: either install the matching wheel or set `model.attn_implementation: eager` in `configs/sft.yaml`, `configs/grpo.yaml`, and `configs/eval.yaml` for a slower no-flash-attn run.
+
+`vllm` tries to upgrade PyTorch to 2.7: make sure `requirements/base.txt` uses `vllm==0.8.5`, not `vllm==0.9.0`.
 
 DeepSpeed launch hangs: verify `CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,7`, `NCCL_P2P_DISABLE=0`, and that no other process is using the GPUs. For debugging, run with `--num_gpus 1` first.

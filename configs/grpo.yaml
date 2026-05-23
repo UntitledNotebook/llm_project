@@ -5,10 +5,10 @@ run_name: grpo_qwen25_1p5b_gsm8k
 seed: 1234
 
 model:
-  name_or_path: Qwen/Qwen2.5-1.5B-Base
+  name_or_path: Qwen/Qwen2.5-1.5B
   # For RL-after-SFT, point this at outputs/sft_qwen25_1p5b_numina_gsm8k/hf.
   init_from_sft_checkpoint: null
-  reference_model_name_or_path: Qwen/Qwen2.5-1.5B-Base
+  reference_model_name_or_path: Qwen/Qwen2.5-1.5B
   trust_remote_code: true
   dtype: bf16
   attn_implementation: flash_attention_2

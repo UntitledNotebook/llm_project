@@ -3,7 +3,7 @@
 
 Run this *after* installing PyTorch. The resulting filename follows the Dao-AILab release
 convention, for example:
-flash_attn-2.8.2+cu12torch2.7cxx11abiFALSE-cp310-cp310-linux_x86_64.whl
+flash_attn-2.8.2+cu12torch2.6cxx11abiFALSE-cp310-cp310-linux_x86_64.whl
 """
 from __future__ import annotations
 
@@ -26,6 +26,8 @@ def main() -> None:
     py_tag = f"cp{sys.version_info.major}{sys.version_info.minor}"
     torch_major_minor = ".".join(torch.__version__.split("+")[0].split(".")[:2])
     cuda = torch.version.cuda or "0.0"
+    # Dao-AILab flash-attn release wheels use CUDA-major tags such as cu12,
+    # even when PyTorch itself was installed from a cu124 or cu126 index.
     cuda_major = cuda.split(".")[0]
     abi = "TRUE" if bool(torch._C._GLIBCXX_USE_CXX11_ABI) else "FALSE"
     machine = platform.machine()

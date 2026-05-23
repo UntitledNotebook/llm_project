@@ -2,8 +2,8 @@
 
 This repository is a code framework for the course project **Choice A: Post-training Implementation**, covering:
 
-- **Part 1: SFT** on `Qwen/Qwen2.5-1.5B-Base` using the `AI-MO/NuminaMath-CoT` subset with `source == "gsm8k"`.
-- **Part 2: GRPO** on `Qwen/Qwen2.5-1.5B-Base` using GSM8K.
+- **Part 1: SFT** on `Qwen/Qwen2.5-1.5B` using the `AI-MO/NuminaMath-CoT` subset with `source == "gsm8k"`.
+- **Part 2: GRPO** on `Qwen/Qwen2.5-1.5B` using GSM8K.
 
 Part 3 open exploration is intentionally omitted.
 
@@ -110,8 +110,8 @@ outputs/eval/base_mmlu.json
 For a fast debug run:
 
 ```bash
-python -m llm_project.cli.eval_gsm8k --model Qwen/Qwen2.5-1.5B-Base --max_samples 16 --output outputs/eval/debug_gsm8k.json
-python -m llm_project.cli.eval_mmlu --model Qwen/Qwen2.5-1.5B-Base --subjects abstract_algebra --max_samples_per_subject 16 --output outputs/eval/debug_mmlu.json
+python -m llm_project.cli.eval_gsm8k --model Qwen/Qwen2.5-1.5B --max_samples 16 --output outputs/eval/debug_gsm8k.json
+python -m llm_project.cli.eval_mmlu --model Qwen/Qwen2.5-1.5B --subjects abstract_algebra --max_samples_per_subject 16 --output outputs/eval/debug_mmlu.json
 ```
 
 ## 4. Part 1: Run SFT
@@ -163,12 +163,12 @@ outputs/figures/sft_train_validation_curve.png
 
 ## 5. Part 2: Run GRPO
 
-By default, GRPO starts from `Qwen/Qwen2.5-1.5B-Base`. To run RL after the SFT checkpoint, edit `configs/grpo.yaml`:
+By default, GRPO starts from `Qwen/Qwen2.5-1.5B`. To run RL after the SFT checkpoint, edit `configs/grpo.yaml`:
 
 ```yaml
 model:
   init_from_sft_checkpoint: outputs/sft_qwen25_1p5b_numina_gsm8k/hf
-  reference_model_name_or_path: Qwen/Qwen2.5-1.5B-Base
+  reference_model_name_or_path: Qwen/Qwen2.5-1.5B
 ```
 
 Launch GRPO:

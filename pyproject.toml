@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "llm-choice-a-posttraining"
 version = "0.1.0"
-description = "Course project Choice A framework: SFT and GRPO for Qwen2.5-1.5B-Base"
+description = "Course project Choice A framework: SFT and GRPO for Qwen2.5-1.5B"
 readme = "README.md"
 requires-python = ">=3.10,<3.11"
 license = {text = "MIT"}
@@ -31,7 +31,7 @@ dependencies = [
     "packaging>=24.0",
     "tensorboard>=2.16.0",
     "ninja>=1.11.1",
-    "vllm==0.9.0"
+    "vllm==0.8.5"
 ]
 
 [project.optional-dependencies]

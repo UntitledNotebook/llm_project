@@ -4,7 +4,7 @@ run_name: sft_qwen25_1p5b_numina_gsm8k
 seed: 42
 
 model:
-  name_or_path: Qwen/Qwen2.5-1.5B-Base
+  name_or_path: Qwen/Qwen2.5-1.5B
   trust_remote_code: true
   dtype: bf16
   attn_implementation: flash_attention_2  # change to eager if flash-attn is unavailable
