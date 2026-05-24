@@ -241,7 +241,7 @@ SFT uses standard next-token prediction with labels masked over the prompt token
 
 GRPO uses grouped rollouts per prompt. Rewards are normalized within each group to produce advantages. The loss uses a clipped policy-gradient term plus a reference-model KL penalty. GSM8K rewards are based on exact normalized numeric answer matching, with an optional small formatting reward.
 
-MMLU evaluation is implemented as answer-choice log-likelihood scoring over `A/B/C/D`, not free-form generation. GSM8K evaluation uses generation and numeric answer extraction.
+MMLU evaluation uses generation and compares the extracted final boxed answer against `A/B/C/D`, accepting either boxed letters or boxed `1`-through-`4` aliases. GSM8K evaluation uses generation and numeric answer extraction.
 
 ## 8. Practical memory settings for 8 × RTX 4090
 

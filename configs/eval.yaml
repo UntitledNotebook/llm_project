@@ -21,4 +21,7 @@ mmlu:
   subjects: all
   max_samples_per_subject: null
   batch_size: 1
+  max_new_tokens: 512
+  temperature: 0.0
+  top_p: 1.0
   output_path: outputs/eval/mmlu.json
