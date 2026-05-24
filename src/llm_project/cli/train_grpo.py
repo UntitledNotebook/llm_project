@@ -239,11 +239,6 @@ def main() -> None:
                         logger.write({"phase": "eval", "epoch": epoch, "step": global_step, **metrics})
                         print_rank0(f"GRPO eval step={global_step}: {metrics}")
                     barrier()
-
-                if int(cfg.train.save_steps) > 0 and global_step % int(cfg.train.save_steps) == 0:
-                    model_engine.save_checkpoint(str(output_dir / "ds_checkpoints" / f"global_step{global_step}"))
-
-    model_engine.save_checkpoint(str(output_dir / "ds_checkpoints" / "final"))
     if bool(cfg.train.save_hf_at_end):
         save_hf_checkpoint(model_engine, tokenizer, output_dir / "hf")
     print_rank0("GRPO finished.")

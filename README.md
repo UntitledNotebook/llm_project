@@ -75,7 +75,6 @@ dataset:
 train:
   num_train_epochs: 1
   eval_steps: 5
-  save_steps: 20
 ```
 
 ```yaml
@@ -88,7 +87,6 @@ rollout:
   max_new_tokens: 128
 train:
   eval_steps: 10
-  save_steps: 20
 ```
 
 ## 3. Baseline evaluation before post-training
@@ -135,7 +133,6 @@ Main outputs:
 ```text
 outputs/sft_qwen25_1p5b_numina_gsm8k/
 ├── hf/                            # Hugging Face checkpoint for evaluation
-├── ds_checkpoints/                # DeepSpeed checkpoints
 ├── logs/sft_metrics.jsonl         # train loss and validation loss
 ├── resolved_sft_config.yaml
 └── deepspeed_config.json
@@ -190,7 +187,6 @@ Main outputs:
 ```text
 outputs/grpo_qwen25_1p5b_gsm8k/
 ├── hf/                            # Hugging Face checkpoint for evaluation
-├── ds_checkpoints/
 ├── logs/grpo_metrics.jsonl        # reward, rollout accuracy, KL, optional test accuracy
 ├── eval/gsm8k_step*.json          # test-set accuracy snapshots
 ├── resolved_grpo_config.yaml

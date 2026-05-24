@@ -1,0 +1,29 @@
+# Choice A / Part 1: short SFT smoke config.
+run_name: sft_debug
+seed: 42
+
+model:
+  name_or_path: Qwen/Qwen2.5-1.5B
+  trust_remote_code: true
+  dtype: bf16
+  attn_implementation: flash_attention_2
+  gradient_checkpointing: true
+
+dataset:
+  validation_size: 16
+  max_train_samples: 128
+  max_eval_samples: 16
+  max_seq_length: 1024
+
+train:
+  output_dir: output/sft_debug
+  per_device_train_batch_size: 1
+  per_device_eval_batch_size: 1
+  num_train_epochs: 1
+  learning_rate: 2.0e-5
+  weight_decay: 0.0
+  warmup_ratio: 0.03
+  max_grad_norm: 1.0
+  logging_steps: 1
+  eval_steps: 5
+  save_hf_at_end: true

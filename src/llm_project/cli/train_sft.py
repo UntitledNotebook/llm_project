@@ -191,14 +191,8 @@ def main() -> None:
                     metrics = evaluate(model_engine, val_loader, device)
                     logger.write({"phase": "eval", "epoch": epoch, "step": global_step, **metrics})
                     print_rank0(f"eval step={global_step}: {metrics}")
-
-                if int(cfg.train.save_steps) > 0 and global_step % int(cfg.train.save_steps) == 0:
-                    ckpt_dir = output_dir / "ds_checkpoints" / f"global_step{global_step}"
-                    model_engine.save_checkpoint(str(ckpt_dir))
-
     metrics = evaluate(model_engine, val_loader, device)
     logger.write({"phase": "eval", "epoch": int(cfg.train.num_train_epochs), "step": global_step, **metrics})
-    model_engine.save_checkpoint(str(output_dir / "ds_checkpoints" / "final"))
     if bool(cfg.train.save_hf_at_end):
         save_hf_checkpoint(model_engine, tokenizer, output_dir / "hf")
     print_rank0("SFT finished.")

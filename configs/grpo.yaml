@@ -48,5 +48,4 @@ train:
   max_grad_norm: 1.0
   logging_steps: 1
   eval_steps: 100
-  save_steps: 250
   save_hf_at_end: true
