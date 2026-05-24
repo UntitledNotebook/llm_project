@@ -11,11 +11,6 @@ model:
   gradient_checkpointing: true
 
 dataset:
-  name: AI-MO/NuminaMath-CoT
-  split: train
-  source_filter: gsm8k
-  prompt_field_candidates: [problem, question, prompt]
-  response_field_candidates: [solution, answer, response]
   validation_size: 256
   max_train_samples: null    # set to a small integer for debugging
   max_eval_samples: 256

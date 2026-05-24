@@ -85,12 +85,7 @@ def main() -> None:
         trust_remote_code=bool(cfg.model.trust_remote_code),
         padding_side="right",
     )
-    raw = load_numina_gsm8k_sft_raw(
-        dataset_name=cfg.dataset.name,
-        split=cfg.dataset.split,
-        source_filter=cfg.dataset.source_filter,
-        max_samples=cfg.dataset.max_train_samples,
-    )
+    raw = load_numina_gsm8k_sft_raw(max_samples=cfg.dataset.max_train_samples)
     train_raw, val_raw = train_validation_split(raw, cfg.dataset.validation_size, int(cfg.seed))
     if cfg.dataset.max_eval_samples is not None:
         val_raw = val_raw.select(range(min(int(cfg.dataset.max_eval_samples), len(val_raw))))
@@ -99,15 +94,11 @@ def main() -> None:
         train_raw,
         tokenizer,
         max_seq_length=cfg.dataset.max_seq_length,
-        prompt_field_candidates=cfg.dataset.prompt_field_candidates,
-        response_field_candidates=cfg.dataset.response_field_candidates,
     )
     val_dataset = SFTDataset(
         val_raw,
         tokenizer,
         max_seq_length=cfg.dataset.max_seq_length,
-        prompt_field_candidates=cfg.dataset.prompt_field_candidates,
-        response_field_candidates=cfg.dataset.response_field_candidates,
     )
     collator = SFTDataCollator(tokenizer)
 
