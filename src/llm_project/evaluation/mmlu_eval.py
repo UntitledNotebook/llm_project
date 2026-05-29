@@ -10,7 +10,7 @@ from tqdm import tqdm
 
 from llm_project.data.prompts import build_mmlu_prompt
 from llm_project.math_utils import extract_after_final_marker, extract_boxed_answer
-from llm_project.data.mmlu_dataset import load_mmlu_subject, mmlu_answer_index, resolve_subjects
+from llm_project.data.mmlu_dataset import load_mmlu_subject, resolve_subjects
 
 _MMLU_ANSWER_RE = re.compile(r"^([A-Da-d1-4])$")
 _MMLU_NUMBER_TO_LETTER = {"1": "A", "2": "B", "3": "C", "4": "D"}
@@ -85,12 +85,8 @@ def evaluate_mmlu_model(
 
                 for row in batch_rows:
                     choices = list(row["choices"])
-                    if len(choices) != 4:
-                        raise ValueError(
-                            f"Expected 4 MMLU choices, got {len(choices)} for {subject}"
-                        )
                     prompts.append(build_mmlu_prompt(subject, row["question"], choices))
-                    gold_letters.append(letters[mmlu_answer_index(row)])
+                    gold_letters.append(letters[row["answer"]])
 
                 encoded = tokenizer(
                     prompts,

@@ -5,7 +5,7 @@ import json
 
 import torch
 
-from llm_project.config import load_config
+from llm_project.config import load_config, to_plain_dict
 from llm_project.evaluation.mmlu_eval import evaluate_mmlu_model
 from llm_project.models import load_causal_lm, load_tokenizer
 
@@ -24,6 +24,9 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--attn", type=str, default=None, help="Override attn implementation, e.g. eager"
     )
+    parser.add_argument(
+        "--stage", type=str, default="custom", help="Metric stage name, e.g. base, sft, grpo"
+    )
     return parser.parse_args()
 
 
@@ -31,6 +34,12 @@ def main() -> None:
     args = parse_args()
     cfg = load_config(args.config)
     model_name = args.model or cfg.model.name_or_path
+    import wandb
+
+    wandb_config = to_plain_dict(cfg)
+    wandb_config["eval_stage"] = args.stage
+    wandb_config["model"]["name_or_path"] = model_name
+    wandb.init(project="llm-course-project", name=f"{args.stage}_mmlu_eval", config=wandb_config)
     tokenizer = load_tokenizer(
         model_name, trust_remote_code=bool(cfg.model.trust_remote_code), padding_side="left"
     )
@@ -57,6 +66,15 @@ def main() -> None:
         top_p=float(cfg.mmlu.get("top_p", 1.0)),
         output_path=args.output or cfg.mmlu.output_path,
     )
+    wandb_metrics = {
+        f"eval/{args.stage}/mmlu_accuracy": metrics["accuracy"],
+        f"eval/{args.stage}/mmlu_correct": metrics["correct"],
+        f"eval/{args.stage}/mmlu_total": metrics["total"],
+    }
+    for subject, subject_metrics in metrics["per_subject"].items():
+        wandb_metrics[f"eval/{args.stage}/mmlu/{subject}_accuracy"] = subject_metrics["accuracy"]
+    wandb.log(wandb_metrics)
+    wandb.finish()
     print(json.dumps({k: v for k, v in metrics.items() if k != "per_subject"}, indent=2))
     torch.cuda.empty_cache()
 

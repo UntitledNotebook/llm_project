@@ -85,14 +85,3 @@ def load_mmlu_subject(
         dataset = dataset.select(range(min(int(max_samples), len(dataset))))
     return dataset
 
-
-def mmlu_answer_index(row: dict[str, Any]) -> int:
-    answer = row.get("answer")
-    if isinstance(answer, int):
-        return answer
-    if isinstance(answer, str):
-        stripped = answer.strip()
-        if stripped.isdigit():
-            return int(stripped)
-        return "ABCD".index(stripped.upper())
-    raise ValueError(f"Unsupported MMLU answer format: {answer!r}")

@@ -29,7 +29,6 @@ from llm_project.distributed import (
     print_rank0,
     world_size,
 )
-from llm_project.logging_utils import AverageMeter, JsonlLogger
 from llm_project.models import enable_training_mode, load_causal_lm, load_tokenizer
 from llm_project.seed import set_seed
 from llm_project.training.checkpointing import save_hf_checkpoint
@@ -159,7 +158,10 @@ def main() -> None:
         config=args.ds_config,
     )
 
-    logger = JsonlLogger(output_dir / "logs" / "sft_metrics.jsonl", enabled=is_main_process())
+    if is_main_process():
+        import wandb
+
+        wandb.init(project="llm-course-project", name=cfg.run_name, config=to_plain_dict(cfg))
     global_step = 0
     print_rank0(
         f"SFT start: train_examples={len(train_dataset)} val_examples={len(val_dataset)} "
@@ -169,7 +171,8 @@ def main() -> None:
     for epoch in range(int(cfg.train.num_train_epochs)):
         if train_sampler is not None:
             train_sampler.set_epoch(epoch)
-        loss_meter = AverageMeter()
+        loss_total = 0.0
+        loss_count = 0
         progress = tqdm(train_loader, disable=not is_main_process(), desc=f"SFT epoch {epoch}")
         for micro_step, batch in enumerate(progress, start=1):
             batch = move_to_device(batch, device)
@@ -177,24 +180,57 @@ def main() -> None:
             loss = outputs.loss
             model_engine.backward(loss)
             model_engine.step()
-            loss_meter.update(float(loss.detach().float().item()))
+            loss_total += float(loss.detach().float().item())
+            loss_count += 1
 
             if model_engine.is_gradient_accumulation_boundary():
                 global_step += 1
                 if global_step % int(cfg.train.logging_steps) == 0:
-                    lr = scheduler.get_last_lr()[0] if scheduler is not None else float(cfg.train.learning_rate)
-                    logger.write({"phase": "train", "epoch": epoch, "step": global_step, "loss": loss_meter.avg, "lr": lr})
-                    progress.set_postfix(loss=f"{loss_meter.avg:.4f}", step=global_step)
-                    loss_meter.reset()
+                    lr = (
+                        scheduler.get_last_lr()[0]
+                        if scheduler is not None
+                        else float(cfg.train.learning_rate)
+                    )
+                    avg_loss = loss_total / max(1, loss_count)
+                    if is_main_process():
+                        wandb.log(
+                            {
+                                "epoch": epoch,
+                                "sft/train/loss": avg_loss,
+                                "sft/train/lr": lr,
+                            },
+                            step=global_step,
+                        )
+                    progress.set_postfix(loss=f"{avg_loss:.4f}", step=global_step)
+                    loss_total = 0.0
+                    loss_count = 0
 
                 if int(cfg.train.eval_steps) > 0 and global_step % int(cfg.train.eval_steps) == 0:
                     metrics = evaluate(model_engine, val_loader, device)
-                    logger.write({"phase": "eval", "epoch": epoch, "step": global_step, **metrics})
+                    if is_main_process():
+                        wandb.log(
+                            {
+                                "epoch": epoch,
+                                "sft/eval/val_loss": metrics["val_loss"],
+                                "sft/eval/val_ppl": metrics["val_ppl"],
+                            },
+                            step=global_step,
+                        )
                     print_rank0(f"eval step={global_step}: {metrics}")
     metrics = evaluate(model_engine, val_loader, device)
-    logger.write({"phase": "eval", "epoch": int(cfg.train.num_train_epochs), "step": global_step, **metrics})
+    if is_main_process():
+        wandb.log(
+            {
+                "epoch": int(cfg.train.num_train_epochs),
+                "sft/eval/val_loss": metrics["val_loss"],
+                "sft/eval/val_ppl": metrics["val_ppl"],
+            },
+            step=global_step,
+        )
     if bool(cfg.train.save_hf_at_end):
         save_hf_checkpoint(model_engine, tokenizer, output_dir / "hf")
+    if is_main_process():
+        wandb.finish()
     print_rank0("SFT finished.")
 
 

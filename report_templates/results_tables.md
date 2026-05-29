@@ -7,7 +7,7 @@
 | Qwen2.5-1.5B-Base before SFT | TODO | TODO | `scripts/eval_base.sh` |
 | After NuminaMath-CoT source=gsm8k SFT | TODO | TODO | `scripts/eval_sft.sh` |
 
-Figure: `outputs/figures/sft_train_validation_curve.png`
+Figure: wandb chart with `sft/train/loss` and `sft/eval/val_loss`
 
 ## Part 2: GRPO
 
@@ -16,4 +16,4 @@ Figure: `outputs/figures/sft_train_validation_curve.png`
 | Qwen2.5-1.5B-Base before GRPO | TODO | TODO | Use the selected initial policy, often the base or SFT checkpoint |
 | After GRPO on GSM8K | TODO | TODO | `scripts/eval_grpo.sh` |
 
-Figure: `outputs/figures/grpo_reward_accuracy_curve.png`
+Figure: wandb chart with `grpo/train/reward` and `grpo/eval/gsm8k_accuracy`

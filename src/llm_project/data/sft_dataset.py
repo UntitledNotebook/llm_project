@@ -64,16 +64,13 @@ class SFTDataset(TorchDataset):
             response_text += self.tokenizer.eos_token
         response_ids = self.tokenizer(response_text, add_special_tokens=False).input_ids
 
+        if len(response_ids) > self.max_seq_length:
+            response_ids = response_ids[: self.max_seq_length]
+        prompt_budget = self.max_seq_length - len(response_ids)
+        prompt_ids = prompt_ids[-prompt_budget:] if prompt_budget > 0 else []
+
         input_ids = prompt_ids + response_ids
         labels = [-100] * len(prompt_ids) + response_ids
-        if len(input_ids) > self.max_seq_length:
-            input_ids = input_ids[: self.max_seq_length]
-            labels = labels[: self.max_seq_length]
-        if all(label == -100 for label in labels):
-            # Keep at least one supervised token if the prompt consumed the entire window.
-            input_ids = input_ids[-self.max_seq_length :]
-            labels = [-100] * len(input_ids)
-            labels[-1] = input_ids[-1]
         attention_mask = [1] * len(input_ids)
         return {
             "input_ids": torch.tensor(input_ids, dtype=torch.long),

@@ -24,10 +24,9 @@ Part 3 open exploration is intentionally omitted.
 │   ├── run_grpo_8gpu.sh
 │   ├── eval_base.sh
 │   ├── eval_sft.sh
-│   ├── eval_grpo.sh
-│   └── plot_all.sh
+│   └── eval_grpo.sh
 ├── src/llm_project/
-│   ├── cli/                      # train/eval/plot entrypoints
+│   ├── cli/                      # train/eval entrypoints
 │   ├── data/                     # dataset loading and prompt formatting
 │   ├── evaluation/               # GSM8K and MMLU evaluators
 │   ├── training/                 # losses, rewards, generation, checkpoint helpers
@@ -52,6 +51,9 @@ source .venv/bin/activate
 
 # Install PyTorch first, then project dependencies and flash-attn.
 python scripts/doctor.py
+
+# Training and evaluation log metrics directly to Weights & Biases.
+wandb login
 ```
 
 The provided server has 8 × RTX 4090 GPUs, so the default scripts use `--num_gpus 8` and `configs/deepspeed_zero2.json`.
@@ -133,10 +135,11 @@ Main outputs:
 ```text
 outputs/sft_qwen25_1p5b_numina_gsm8k/
 ├── hf/                            # Hugging Face checkpoint for evaluation
-├── logs/sft_metrics.jsonl         # train loss and validation loss
 ├── resolved_sft_config.yaml
 └── deepspeed_config.json
 ```
+
+SFT train loss, validation loss, and validation perplexity are logged to the `llm-course-project` wandb project.
 
 Evaluate the SFT checkpoint:
 
@@ -144,19 +147,7 @@ Evaluate the SFT checkpoint:
 bash scripts/eval_sft.sh outputs/sft_qwen25_1p5b_numina_gsm8k/hf
 ```
 
-Plot the SFT curve:
-
-```bash
-python -m llm_project.cli.plot_curves \
-  --sft outputs/sft_qwen25_1p5b_numina_gsm8k/logs/sft_metrics.jsonl \
-  --out_dir outputs/figures
-```
-
-Report figure:
-
-```text
-outputs/figures/sft_train_validation_curve.png
-```
+For the report, export or screenshot the wandb chart containing `sft/train/loss`, `sft/eval/val_loss`, and `sft/eval/val_ppl`.
 
 ## 5. Part 2: Run GRPO
 
@@ -187,11 +178,12 @@ Main outputs:
 ```text
 outputs/grpo_qwen25_1p5b_gsm8k/
 ├── hf/                            # Hugging Face checkpoint for evaluation
-├── logs/grpo_metrics.jsonl        # reward, rollout accuracy, KL, optional test accuracy
 ├── eval/gsm8k_step*.json          # test-set accuracy snapshots
 ├── resolved_grpo_config.yaml
 └── deepspeed_config.json
 ```
+
+GRPO reward, KL diagnostics, rollout accuracy, and test-set accuracy are logged to the `llm-course-project` wandb project.
 
 Evaluate the final GRPO checkpoint:
 
@@ -199,26 +191,14 @@ Evaluate the final GRPO checkpoint:
 bash scripts/eval_grpo.sh outputs/grpo_qwen25_1p5b_gsm8k/hf
 ```
 
-Plot reward and test accuracy:
-
-```bash
-python -m llm_project.cli.plot_curves \
-  --grpo outputs/grpo_qwen25_1p5b_gsm8k/logs/grpo_metrics.jsonl \
-  --out_dir outputs/figures
-```
-
-Report figure:
-
-```text
-outputs/figures/grpo_reward_accuracy_curve.png
-```
+For the report, export or screenshot the wandb chart containing `grpo/train/reward` and `grpo/eval/gsm8k_accuracy`.
 
 ## 6. Submit-ready result files to collect
 
 For Part 1 SFT:
 
 ```text
-outputs/figures/sft_train_validation_curve.png
+wandb chart: sft/train/loss and sft/eval/val_loss
 outputs/eval/base_gsm8k.json
 outputs/eval/base_mmlu.json
 outputs/eval/sft_gsm8k.json
@@ -228,7 +208,7 @@ outputs/eval/sft_mmlu.json
 For Part 2 GRPO:
 
 ```text
-outputs/figures/grpo_reward_accuracy_curve.png
+wandb chart: grpo/train/reward and grpo/eval/gsm8k_accuracy
 outputs/eval/grpo_gsm8k.json
 outputs/eval/grpo_mmlu.json
 ```

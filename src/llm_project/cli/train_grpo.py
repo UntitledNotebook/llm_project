@@ -25,7 +25,6 @@ from llm_project.distributed import (
     world_size,
 )
 from llm_project.evaluation.gsm8k_eval import evaluate_gsm8k_model
-from llm_project.logging_utils import JsonlLogger
 from llm_project.models import enable_training_mode, freeze_model, load_causal_lm, load_tokenizer
 from llm_project.seed import set_seed
 from llm_project.training.checkpointing import save_hf_checkpoint
@@ -140,7 +139,10 @@ def main() -> None:
         format_reward=float(cfg.reward.format_reward),
         require_final_answer_marker=bool(cfg.reward.require_final_answer_marker),
     )
-    logger = JsonlLogger(output_dir / "logs" / "grpo_metrics.jsonl", enabled=is_main_process())
+    if is_main_process():
+        import wandb
+
+        wandb.init(project="llm-course-project", name=cfg.run_name, config=to_plain_dict(cfg))
     global_step = 0
 
     print_rank0(
@@ -203,22 +205,28 @@ def main() -> None:
                 group_acc = sum(int(item.correct) for item in reward_results) / max(1, len(reward_results))
                 avg_len = float(completion_mask[:, 1:].sum(dim=1).float().mean().item())
                 if global_step % int(cfg.train.logging_steps) == 0:
-                    lr = scheduler.get_last_lr()[0] if scheduler is not None else float(cfg.train.learning_rate)
-                    logger.write(
-                        {
-                            "phase": "train",
-                            "epoch": epoch,
-                            "step": global_step,
-                            "loss": float(loss_out.loss.detach().float().item()),
-                            "policy_loss": float(loss_out.policy_loss.float().item()),
-                            "kl": float(loss_out.kl.float().item()),
-                            "mean_ratio": float(loss_out.mean_ratio.float().item()),
-                            "reward": avg_reward,
-                            "rollout_accuracy": group_acc,
-                            "avg_completion_tokens": avg_len,
-                            "lr": lr,
-                        }
+                    lr = (
+                        scheduler.get_last_lr()[0]
+                        if scheduler is not None
+                        else float(cfg.train.learning_rate)
                     )
+                    if is_main_process():
+                        wandb.log(
+                            {
+                                "epoch": epoch,
+                                "grpo/train/loss": float(loss_out.loss.detach().float().item()),
+                                "grpo/train/policy_loss": float(
+                                    loss_out.policy_loss.float().item()
+                                ),
+                                "grpo/train/kl": float(loss_out.kl.float().item()),
+                                "grpo/train/mean_ratio": float(loss_out.mean_ratio.float().item()),
+                                "grpo/train/reward": avg_reward,
+                                "grpo/train/rollout_accuracy": group_acc,
+                                "grpo/train/avg_completion_tokens": avg_len,
+                                "grpo/train/lr": lr,
+                            },
+                            step=global_step,
+                        )
                     progress.set_postfix(loss=f"{float(loss_out.loss):.4f}", reward=f"{avg_reward:.3f}")
 
                 if int(cfg.train.eval_steps) > 0 and global_step % int(cfg.train.eval_steps) == 0:
@@ -236,11 +244,21 @@ def main() -> None:
                             temperature=0.0,
                             output_path=output_dir / "eval" / f"gsm8k_step{global_step}.json",
                         )
-                        logger.write({"phase": "eval", "epoch": epoch, "step": global_step, **metrics})
+                        wandb.log(
+                            {
+                                "epoch": epoch,
+                                "grpo/eval/gsm8k_accuracy": metrics["accuracy"],
+                                "grpo/eval/gsm8k_correct": metrics["correct"],
+                                "grpo/eval/gsm8k_total": metrics["total"],
+                            },
+                            step=global_step,
+                        )
                         print_rank0(f"GRPO eval step={global_step}: {metrics}")
                     barrier()
     if bool(cfg.train.save_hf_at_end):
         save_hf_checkpoint(model_engine, tokenizer, output_dir / "hf")
+    if is_main_process():
+        wandb.finish()
     print_rank0("GRPO finished.")
 
 
