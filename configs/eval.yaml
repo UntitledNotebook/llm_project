@@ -18,7 +18,7 @@ gsm8k:
 mmlu:
   dataset_name: cais/mmlu
   split: test
-  subjects: all
+  subjects: elementary_mathematics,high_school_mathematics,college_mathematics
   max_samples_per_subject: null
   batch_size: 1
   max_new_tokens: 512

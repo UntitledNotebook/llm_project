@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from datetime import timedelta
 import os
 from typing import Any
 
@@ -8,7 +9,7 @@ import torch.distributed as dist
 
 
 def local_rank() -> int:
-    return int(os.environ.get("LOCAL_RANK", os.environ.get("SLURM_LOCALID", "0")))
+    return int(os.environ.get("LOCAL_RANK", "0"))
 
 
 def global_rank() -> int:
@@ -36,12 +37,16 @@ def maybe_init_distributed() -> None:
     if not torch.cuda.is_available():
         raise RuntimeError("Distributed training requires CUDA GPUs.")
     torch.cuda.set_device(local_rank())
-    dist.init_process_group(backend="nccl")
+    timeout_seconds = int(os.environ.get("LLM_PROJECT_DIST_TIMEOUT_SECONDS", "7200"))
+    dist.init_process_group(backend="nccl", timeout=timedelta(seconds=timeout_seconds))
 
 
 def barrier() -> None:
     if dist.is_available() and dist.is_initialized():
-        dist.barrier()
+        if torch.cuda.is_available():
+            dist.barrier(device_ids=[local_rank()])
+        else:
+            dist.barrier()
 
 
 def all_reduce_mean(value: torch.Tensor) -> torch.Tensor:

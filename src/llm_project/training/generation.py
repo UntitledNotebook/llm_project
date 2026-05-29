@@ -62,7 +62,8 @@ def generate_completions(
     completion_ids = generated[:, prompt_len:]
     completion_mask = completion_mask_from_eos(completion_ids, tokenizer.eos_token_id)
     prompt_attention_mask = encoded["attention_mask"].repeat_interleave(group_size, dim=0)
-    attention_mask = torch.cat([prompt_attention_mask, completion_mask], dim=1)
+    completion_attention_mask = torch.ones_like(completion_mask, dtype=torch.long)
+    attention_mask = torch.cat([prompt_attention_mask, completion_attention_mask], dim=1)
     full_completion_mask = torch.cat(
         [torch.zeros_like(prompt_attention_mask, dtype=torch.long), completion_mask], dim=1
     )

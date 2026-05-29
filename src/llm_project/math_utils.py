@@ -9,7 +9,7 @@ _BOXED_RE = re.compile(r"\\boxed\{([^{}]+)\}")
 
 
 def strip_latex_delimiters(text: str) -> str:
-    return text.replace("$", "").replace("\\,", "").replace("\\!", "").strip()
+    return text.replace("\\$", "").replace("\\%", "").replace("$", "").replace("\\,", "").replace("\\!", "").strip()
 
 
 def extract_boxed_answer(text: str) -> str | None:
@@ -70,7 +70,7 @@ def normalize_numeric_answer(value: str | None) -> str | None:
     normalized = decimal.normalize()
     # Avoid scientific notation for simple integer answers.
     if normalized == normalized.to_integral():
-        return str(normalized.quantize(Decimal(1)))
+        return format(normalized, "f").split(".", 1)[0]
     return format(normalized, "f").rstrip("0").rstrip(".")
 
 
