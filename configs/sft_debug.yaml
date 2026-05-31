@@ -7,7 +7,6 @@ model:
   trust_remote_code: true
   dtype: bf16
   attn_implementation: flash_attention_2
-  gradient_checkpointing: true
 
 dataset:
   validation_size: 16
@@ -27,3 +26,4 @@ train:
   logging_steps: 1
   eval_steps: 5
   save_hf_at_end: true
+  save_hf_each_epoch: true

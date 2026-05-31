@@ -55,12 +55,11 @@ def load_causal_lm(
     return model
 
 
-def enable_training_mode(model, gradient_checkpointing: bool = True) -> None:
+def enable_training_mode(model) -> None:
     model.train()
-    if gradient_checkpointing:
-        model.gradient_checkpointing_enable()
-        if hasattr(model, "enable_input_require_grads"):
-            model.enable_input_require_grads()
+    model.gradient_checkpointing_enable()
+    if hasattr(model, "enable_input_require_grads"):
+        model.enable_input_require_grads()
     if hasattr(model.config, "use_cache"):
         model.config.use_cache = False
 

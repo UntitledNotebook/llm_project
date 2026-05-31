@@ -6,7 +6,6 @@ from datasets import Dataset, load_dataset
 from torch.utils.data import Dataset as TorchDataset
 
 from llm_project.data.prompts import build_gsm8k_prompt
-from llm_project.math_utils import extract_answer
 
 
 def load_gsm8k_raw(
@@ -36,7 +35,6 @@ class GSM8KPromptDataset(TorchDataset):
             "question": question,
             "prompt": build_gsm8k_prompt(question),
             "answer": answer_text,
-            "reference_answer": extract_answer(answer_text),
         }
 
 

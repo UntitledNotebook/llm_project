@@ -101,7 +101,7 @@ def main() -> None:
         dtype=cfg.model.dtype,
         attn_implementation=cfg.model.attn_implementation,
     )
-    enable_training_mode(policy_model, bool(cfg.model.gradient_checkpointing))
+    enable_training_mode(policy_model)
 
     reference_name = cfg.model.reference_model_name_or_path or cfg.model.name_or_path
     reference_model = load_causal_lm(
@@ -156,7 +156,7 @@ def main() -> None:
         progress = tqdm(train_loader, disable=not is_main_process(), desc=f"GRPO epoch {epoch}")
         for batch in progress:
             prompts: list[str] = batch["prompt"]
-            refs: list[str | None] = batch["reference_answer"]
+            refs: list[str | None] = batch["answer"]
             group_size = int(cfg.rollout.group_size)
 
             rollout = generate_completions(
@@ -255,6 +255,8 @@ def main() -> None:
                         )
                         print_rank0(f"GRPO eval step={global_step}: {metrics}")
                     barrier()
+        if bool(cfg.train.get("save_hf_each_epoch", False)):
+            save_hf_checkpoint(model_engine, tokenizer, output_dir / f"hf_epoch_{epoch + 1:03d}")
     if bool(cfg.train.save_hf_at_end):
         save_hf_checkpoint(model_engine, tokenizer, output_dir / "hf")
     if is_main_process():

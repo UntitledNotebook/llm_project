@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from llm_project.math_utils import answers_match, extract_answer
+from llm_project.math_utils import verify_math_answer
 
 
 @dataclass
@@ -28,18 +28,19 @@ class GSM8KReward:
         self.require_final_answer_marker = bool(require_final_answer_marker)
 
     def __call__(self, completion: str, reference_answer: str | None) -> RewardResult:
-        pred_answer = extract_answer(completion)
-        correct = answers_match(pred_answer, reference_answer)
-        format_ok = "####" in completion or "boxed" in completion.lower() or "answer" in completion.lower()
+        result = verify_math_answer(completion, reference_answer)
+        correct = result.correct
+        has_final_answer_marker = "####" in completion or "boxed" in completion.lower()
+        format_ok = result.prediction is not None and has_final_answer_marker
         reward = self.correct_answer_reward if correct else self.wrong_answer_reward
         if self.format_reward and format_ok:
             reward += self.format_reward
-        if self.require_final_answer_marker and "####" not in completion:
+        if self.require_final_answer_marker and not has_final_answer_marker:
             reward = self.wrong_answer_reward
         return RewardResult(
             reward=reward,
             correct=correct,
-            pred_answer=pred_answer,
-            reference_answer=reference_answer,
+            pred_answer=result.prediction,
+            reference_answer=result.reference,
             format_ok=format_ok,
         )

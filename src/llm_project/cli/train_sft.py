@@ -133,7 +133,7 @@ def main() -> None:
         dtype=cfg.model.dtype,
         attn_implementation=cfg.model.attn_implementation,
     )
-    enable_training_mode(model, bool(cfg.model.gradient_checkpointing))
+    enable_training_mode(model)
 
     optimizer = torch.optim.AdamW(
         model.parameters(), lr=float(cfg.train.learning_rate), weight_decay=float(cfg.train.weight_decay)
@@ -217,6 +217,8 @@ def main() -> None:
                             step=global_step,
                         )
                     print_rank0(f"eval step={global_step}: {metrics}")
+        if bool(cfg.train.get("save_hf_each_epoch", False)):
+            save_hf_checkpoint(model_engine, tokenizer, output_dir / f"hf_epoch_{epoch + 1:03d}")
     metrics = evaluate(model_engine, val_loader, device)
     if is_main_process():
         wandb.log(

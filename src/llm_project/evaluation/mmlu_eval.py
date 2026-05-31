@@ -9,11 +9,37 @@ import torch
 from tqdm import tqdm
 
 from llm_project.data.prompts import build_mmlu_prompt
-from llm_project.math_utils import extract_after_final_marker, extract_boxed_answer
 from llm_project.data.mmlu_dataset import load_mmlu_subject, resolve_subjects
 
 _MMLU_ANSWER_RE = re.compile(r"^([A-Da-d1-4])$")
 _MMLU_NUMBER_TO_LETTER = {"1": "A", "2": "B", "3": "C", "4": "D"}
+_BOXED_RE = re.compile(r"\\boxed\s*\{([^{}]+)\}")
+_FINAL_MARKER_PATTERNS = [
+    r"####\s*([^\n]+)",
+    r"final answer is\s*[:\-]?\s*([^\n]+)",
+    r"answer is\s*[:\-]?\s*([^\n]+)",
+]
+
+
+def _strip_choice_answer(answer: str) -> str:
+    return answer.replace("\\$", "").replace("$", "").strip().strip("`). \t\n\r")
+
+
+def _extract_boxed_answer(text: str) -> str | None:
+    matches = _BOXED_RE.findall(text or "")
+    if matches:
+        return _strip_choice_answer(matches[-1])
+    return None
+
+
+def _extract_after_final_marker(text: str) -> str | None:
+    if not text:
+        return None
+    for pattern in _FINAL_MARKER_PATTERNS:
+        matches = re.findall(pattern, text, flags=re.IGNORECASE)
+        if matches:
+            return _strip_choice_answer(matches[-1])
+    return None
 
 
 def normalize_mmlu_answer(answer: str | None) -> str | None:
@@ -28,10 +54,10 @@ def normalize_mmlu_answer(answer: str | None) -> str | None:
 
 
 def extract_mmlu_answer(completion: str) -> str | None:
-    boxed = extract_boxed_answer(completion)
+    boxed = _extract_boxed_answer(completion)
     if boxed is not None:
         return normalize_mmlu_answer(boxed)
-    marked = extract_after_final_marker(completion)
+    marked = _extract_after_final_marker(completion)
     if marked is not None:
         return normalize_mmlu_answer(marked)
     return None

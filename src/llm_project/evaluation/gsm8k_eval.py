@@ -8,7 +8,7 @@ import torch
 from tqdm import tqdm
 
 from llm_project.data.gsm8k_dataset import GSM8KPromptDataset, gsm8k_collate, load_gsm8k_raw
-from llm_project.math_utils import answers_match, extract_answer
+from llm_project.math_utils import verify_math_answer
 
 
 @torch.no_grad()
@@ -59,19 +59,19 @@ def evaluate_gsm8k_model(
             use_cache=True,
         )
         completions = tokenizer.batch_decode(generated[:, prompt_len:], skip_special_tokens=True)
-        for question, completion, ref_answer, answer_text in zip(
-            batch["question"], completions, batch["reference_answer"], batch["answer"]
+        for question, completion, answer_text in zip(
+            batch["question"], completions, batch["answer"]
         ):
-            pred_answer = extract_answer(completion)
-            is_correct = answers_match(pred_answer, ref_answer)
+            result = verify_math_answer(completion, answer_text)
+            is_correct = result.correct
             correct += int(is_correct)
             total += 1
             rows.append(
                 {
                     "question": question,
                     "completion": completion,
-                    "prediction": pred_answer,
-                    "reference_answer": ref_answer,
+                    "prediction": result.prediction,
+                    "reference_answer": result.reference,
                     "reference_text": answer_text,
                     "correct": is_correct,
                 }

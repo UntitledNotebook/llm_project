@@ -1,88 +1,81 @@
 from __future__ import annotations
 
-import re
-from decimal import Decimal, InvalidOperation
-from fractions import Fraction
+from dataclasses import dataclass
+from typing import Any, Sequence
 
-_NUMBER_RE = re.compile(r"[-+]?(?:\d{1,3}(?:,\d{3})+|\d+)(?:\.\d+)?(?:/[+-]?\d+(?:\.\d+)?)?")
-_BOXED_RE = re.compile(r"\\boxed\{([^{}]+)\}")
+from latex2sympy2_extended.latex2sympy2 import NormalizationConfig
+from math_verify import ExprExtractionConfig, LatexExtractionConfig, parse, verify
+
+_GSM8K_FINAL_MARKER = "####"
+
+_PREDICTION_EXTRACTION_CONFIG = [
+    LatexExtractionConfig(
+        boxed_match_priority=0,
+        normalization_config=NormalizationConfig(
+            basic_latex=True,
+            units=True,
+            malformed_operators=False,
+            nits=False,
+            boxed="all",
+            equations=False,
+        ),
+    ),
+    ExprExtractionConfig(),
+]
+_REFERENCE_EXTRACTION_CONFIG = [
+    LatexExtractionConfig(boxed_match_priority=0),
+    ExprExtractionConfig(),
+]
 
 
-def strip_latex_delimiters(text: str) -> str:
-    return text.replace("\\$", "").replace("\\%", "").replace("$", "").replace("\\,", "").replace("\\!", "").strip()
+@dataclass(frozen=True)
+class MathVerificationResult:
+    correct: bool
+    prediction: str | None
+    reference: str | None
+    prediction_parsed: list[Any]
+    reference_parsed: list[Any]
 
 
-def extract_boxed_answer(text: str) -> str | None:
-    matches = _BOXED_RE.findall(text or "")
-    if matches:
-        return strip_latex_delimiters(matches[-1])
-    return None
+def _gsm8k_reference_text(text: str) -> str:
+    if _GSM8K_FINAL_MARKER not in text:
+        return text
+    return text.rsplit(_GSM8K_FINAL_MARKER, maxsplit=1)[-1].strip()
 
 
-def extract_after_final_marker(text: str) -> str | None:
+def parse_math_answer(text: str | None, *, is_prediction: bool) -> list[Any]:
     if not text:
+        return []
+    text_to_parse = text if is_prediction else _gsm8k_reference_text(text)
+    return parse(
+        text_to_parse,
+        extraction_config=(
+            _PREDICTION_EXTRACTION_CONFIG if is_prediction else _REFERENCE_EXTRACTION_CONFIG
+        ),
+        fallback_mode="no_fallback",
+        extraction_mode="first_match",
+    )
+
+
+def parsed_answer_to_string(parsed: Sequence[Any]) -> str | None:
+    if not parsed:
         return None
-    marker_patterns = [r"####\s*([^\n]+)", r"final answer is\s*[:\-]?\s*([^\n]+)", r"answer is\s*[:\-]?\s*([^\n]+)"]
-    for pattern in marker_patterns:
-        matches = re.findall(pattern, text, flags=re.IGNORECASE)
-        if matches:
-            return strip_latex_delimiters(matches[-1])
-    return None
+    if len(parsed) == 1:
+        return str(parsed[0])
+    return ", ".join(str(item) for item in parsed)
 
 
-def extract_last_number(text: str) -> str | None:
-    if not text:
-        return None
-    matches = _NUMBER_RE.findall(text.replace("−", "-"))
-    return matches[-1] if matches else None
-
-
-def extract_answer(text: str) -> str | None:
-    boxed = extract_boxed_answer(text)
-    if boxed:
-        return boxed
-    marked = extract_after_final_marker(text)
-    if marked:
-        last_in_marked = extract_last_number(marked)
-        return last_in_marked or marked
-    return extract_last_number(text)
-
-
-def _to_decimal(value: str) -> Decimal | None:
-    cleaned = strip_latex_delimiters(value).replace(",", "").replace("%", "").strip()
-    cleaned = cleaned.rstrip(".")
-    if not cleaned:
-        return None
-    try:
-        if "/" in cleaned:
-            return Decimal(Fraction(cleaned).numerator) / Decimal(Fraction(cleaned).denominator)
-        return Decimal(cleaned)
-    except (InvalidOperation, ValueError, ZeroDivisionError):
-        return None
-
-
-def normalize_numeric_answer(value: str | None) -> str | None:
-    if value is None:
-        return None
-    decimal = _to_decimal(value)
-    if decimal is None:
-        return strip_latex_delimiters(value).lower().strip()
-    normalized = decimal.normalize()
-    # Avoid scientific notation for simple integer answers.
-    if normalized == normalized.to_integral():
-        return format(normalized, "f").split(".", 1)[0]
-    return format(normalized, "f").rstrip("0").rstrip(".")
-
-
-def answers_match(prediction: str | None, reference: str | None) -> bool:
-    pred_norm = normalize_numeric_answer(prediction)
-    ref_norm = normalize_numeric_answer(reference)
-    if pred_norm is None or ref_norm is None:
-        return False
-    if pred_norm == ref_norm:
-        return True
-    pred_dec = _to_decimal(pred_norm)
-    ref_dec = _to_decimal(ref_norm)
-    if pred_dec is not None and ref_dec is not None:
-        return abs(pred_dec - ref_dec) <= Decimal("1e-4")
-    return False
+def verify_math_answer(completion: str, reference: str | None) -> MathVerificationResult:
+    prediction_parsed = parse_math_answer(completion, is_prediction=True)
+    reference_parsed = parse_math_answer(reference, is_prediction=False)
+    correct = bool(prediction_parsed) and bool(reference_parsed) and verify(
+        reference_parsed,
+        prediction_parsed,
+    )
+    return MathVerificationResult(
+        correct=correct,
+        prediction=parsed_answer_to_string(prediction_parsed),
+        reference=parsed_answer_to_string(reference_parsed),
+        prediction_parsed=prediction_parsed,
+        reference_parsed=reference_parsed,
+    )

@@ -12,7 +12,6 @@ model:
   trust_remote_code: true
   dtype: bf16
   attn_implementation: flash_attention_2
-  gradient_checkpointing: true
 
 dataset:
   name: openai/gsm8k
@@ -49,3 +48,4 @@ train:
   logging_steps: 1
   eval_steps: 100
   save_hf_at_end: true
+  save_hf_each_epoch: true
