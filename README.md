@@ -83,17 +83,14 @@ train:
 # configs/grpo.yaml
 dataset:
   max_train_samples: 32
-  max_eval_samples: 32
 rollout:
   group_size: 2
   max_new_tokens: 128
-train:
-  eval_steps: 10
 ```
 
 ## 3. Baseline evaluation before post-training
 
-Run baseline GSM8K and MMLU evaluation on the base model:
+Run baseline GSM8K and MMLU evaluation on the base model with vLLM:
 
 ```bash
 source .venv/bin/activate
@@ -178,12 +175,11 @@ Main outputs:
 ```text
 outputs/grpo_qwen25_1p5b_gsm8k/
 ├── hf/                            # Hugging Face checkpoint for evaluation
-├── eval/gsm8k_step*.json          # test-set accuracy snapshots
 ├── resolved_grpo_config.yaml
 └── deepspeed_config.json
 ```
 
-GRPO reward, KL diagnostics, rollout accuracy, and test-set accuracy are logged to the `llm-course-project` wandb project.
+GRPO reward, KL diagnostics, and rollout accuracy are logged to the `llm-course-project` wandb project.
 
 Evaluate the final GRPO checkpoint:
 
@@ -191,7 +187,7 @@ Evaluate the final GRPO checkpoint:
 bash scripts/eval_grpo.sh outputs/grpo_qwen25_1p5b_gsm8k/hf
 ```
 
-For the report, export or screenshot the wandb chart containing `grpo/train/reward` and `grpo/eval/gsm8k_accuracy`.
+For the report, export or screenshot the wandb chart containing `grpo/train/reward`, then run final vLLM evaluation with `scripts/eval_grpo.sh`.
 
 ## 6. Submit-ready result files to collect
 
@@ -208,7 +204,7 @@ outputs/eval/sft_mmlu.json
 For Part 2 GRPO:
 
 ```text
-wandb chart: grpo/train/reward and grpo/eval/gsm8k_accuracy
+wandb chart: grpo/train/reward and eval/grpo/gsm8k_accuracy
 outputs/eval/grpo_gsm8k.json
 outputs/eval/grpo_mmlu.json
 ```
@@ -221,7 +217,7 @@ SFT uses standard next-token prediction with labels masked over the prompt token
 
 GRPO uses grouped rollouts per prompt. Rewards are normalized within each group to produce advantages. The loss uses a clipped policy-gradient term plus a reference-model KL penalty. GSM8K rewards are based on exact normalized numeric answer matching, with an optional small formatting reward.
 
-MMLU evaluation uses generation and compares the extracted final boxed answer against `A/B/C/D`, accepting either boxed letters or boxed `1`-through-`4` aliases. GSM8K evaluation uses generation and numeric answer extraction.
+Standalone MMLU and GSM8K evaluation use vLLM generation. MMLU compares the extracted final boxed answer against `A/B/C/D`, accepting either boxed letters or boxed `1`-through-`4` aliases. GSM8K uses numeric answer extraction.
 
 ## 8. Practical memory settings for 8 × RTX 4090
 

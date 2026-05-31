@@ -24,7 +24,6 @@ from llm_project.distributed import (
     print_rank0,
     world_size,
 )
-from llm_project.evaluation.gsm8k_eval import evaluate_gsm8k_model
 from llm_project.models import enable_training_mode, freeze_model, load_causal_lm, load_tokenizer
 from llm_project.seed import set_seed
 from llm_project.training.checkpointing import save_hf_checkpoint
@@ -229,32 +228,6 @@ def main() -> None:
                         )
                     progress.set_postfix(loss=f"{float(loss_out.loss):.4f}", reward=f"{avg_reward:.3f}")
 
-                if int(cfg.train.eval_steps) > 0 and global_step % int(cfg.train.eval_steps) == 0:
-                    # Test-set accuracy curve during RL training. Rank 0 evaluates its local full model replica.
-                    if is_main_process():
-                        metrics = evaluate_gsm8k_model(
-                            model_engine.module,
-                            tokenizer,
-                            dataset_name=cfg.dataset.name,
-                            config_name=cfg.dataset.config_name,
-                            split=cfg.dataset.test_split,
-                            max_samples=cfg.dataset.max_eval_samples,
-                            batch_size=1,
-                            max_new_tokens=int(cfg.rollout.max_new_tokens),
-                            temperature=0.0,
-                            output_path=output_dir / "eval" / f"gsm8k_step{global_step}.json",
-                        )
-                        wandb.log(
-                            {
-                                "epoch": epoch,
-                                "grpo/eval/gsm8k_accuracy": metrics["accuracy"],
-                                "grpo/eval/gsm8k_correct": metrics["correct"],
-                                "grpo/eval/gsm8k_total": metrics["total"],
-                            },
-                            step=global_step,
-                        )
-                        print_rank0(f"GRPO eval step={global_step}: {metrics}")
-                    barrier()
         if bool(cfg.train.get("save_hf_each_epoch", False)):
             save_hf_checkpoint(model_engine, tokenizer, output_dir / f"hf_epoch_{epoch + 1:03d}")
     if bool(cfg.train.save_hf_at_end):

@@ -2,22 +2,19 @@ from __future__ import annotations
 
 import argparse
 import json
-import torch
+import os
 
 from llm_project.config import load_config, to_plain_dict
 from llm_project.evaluation.gsm8k_eval import evaluate_gsm8k_model
-from llm_project.models import load_causal_lm, load_tokenizer
+from llm_project.evaluation.vllm_utils import load_vllm_llm
 
 
 def parse_args() -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description="Evaluate a model on GSM8K")
+    parser = argparse.ArgumentParser(description="Evaluate a model on GSM8K with vLLM")
     parser.add_argument("--config", type=str, default="configs/eval.yaml")
     parser.add_argument("--model", type=str, default=None, help="Override model.name_or_path")
     parser.add_argument("--output", type=str, default=None, help="Override gsm8k.output_path")
     parser.add_argument("--max_samples", type=int, default=None)
-    parser.add_argument(
-        "--attn", type=str, default=None, help="Override attn implementation, e.g. eager"
-    )
     parser.add_argument(
         "--stage", type=str, default="custom", help="Metric stage name, e.g. base, sft, grpo"
     )
@@ -33,19 +30,15 @@ def main() -> None:
     wandb_config = to_plain_dict(cfg)
     wandb_config["eval_stage"] = args.stage
     wandb_config["model"]["name_or_path"] = model_name
-    wandb.init(project="llm-course-project", name=f"{args.stage}_gsm8k_eval", config=wandb_config)
-    tokenizer = load_tokenizer(
-        model_name, trust_remote_code=bool(cfg.model.trust_remote_code), padding_side="left"
+    wandb.init(
+        project="llm-course-project",
+        entity=os.environ["WANDB_ENTITY"],
+        name=f"{args.stage}_gsm8k_eval",
+        config=wandb_config,
     )
-    model = load_causal_lm(
-        model_name,
-        trust_remote_code=bool(cfg.model.trust_remote_code),
-        dtype=cfg.model.dtype,
-        attn_implementation=args.attn or cfg.model.attn_implementation,
-    ).cuda()
+    llm = load_vllm_llm(model_name, cfg)
     metrics = evaluate_gsm8k_model(
-        model,
-        tokenizer,
+        llm,
         dataset_name=cfg.gsm8k.dataset_name,
         config_name=cfg.gsm8k.config_name,
         split=cfg.gsm8k.split,
@@ -65,7 +58,6 @@ def main() -> None:
     )
     wandb.finish()
     print(json.dumps(metrics, indent=2))
-    torch.cuda.empty_cache()
 
 
 if __name__ == "__main__":

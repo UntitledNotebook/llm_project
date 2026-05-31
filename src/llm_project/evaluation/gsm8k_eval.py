@@ -4,17 +4,14 @@ import json
 from pathlib import Path
 from typing import Any
 
-import torch
 from tqdm import tqdm
 
-from llm_project.data.gsm8k_dataset import GSM8KPromptDataset, gsm8k_collate, load_gsm8k_raw
+from llm_project.data.gsm8k_dataset import GSM8KPromptDataset, load_gsm8k_raw
 from llm_project.math_utils import verify_math_answer
 
 
-@torch.no_grad()
 def evaluate_gsm8k_model(
-    model: Any,
-    tokenizer: Any,
+    llm: Any,
     *,
     dataset_name: str = "openai/gsm8k",
     config_name: str = "main",
@@ -26,49 +23,37 @@ def evaluate_gsm8k_model(
     top_p: float = 1.0,
     output_path: str | Path | None = None,
 ) -> dict[str, Any]:
-    model.eval()
-    device = next(model.parameters()).device
-    old_padding_side = tokenizer.padding_side
-    tokenizer.padding_side = "left"
+    from vllm import SamplingParams
 
     raw = load_gsm8k_raw(dataset_name, config_name, split, max_samples)
     dataset = GSM8KPromptDataset(raw)
-    dataloader = torch.utils.data.DataLoader(
-        dataset, batch_size=batch_size, shuffle=False, collate_fn=gsm8k_collate
+    batch_size = max(1, int(batch_size))
+    sampling_params = SamplingParams(
+        max_tokens=int(max_new_tokens),
+        temperature=float(temperature),
+        top_p=float(top_p),
+        skip_special_tokens=True,
     )
 
     rows: list[dict[str, Any]] = []
     correct = 0
     total = 0
-    for batch in tqdm(dataloader, desc="GSM8K eval"):
-        encoded = tokenizer(
-            batch["prompt"],
-            return_tensors="pt",
-            padding=True,
-            add_special_tokens=False,
-        ).to(device)
-        prompt_len = encoded.input_ids.size(1)
-        generated = model.generate(
-            **encoded,
-            max_new_tokens=max_new_tokens,
-            do_sample=temperature > 0.0,
-            temperature=temperature if temperature > 0.0 else None,
-            top_p=top_p if temperature > 0.0 else None,
-            pad_token_id=tokenizer.pad_token_id,
-            eos_token_id=tokenizer.eos_token_id,
-            use_cache=True,
-        )
-        completions = tokenizer.batch_decode(generated[:, prompt_len:], skip_special_tokens=True)
-        for question, completion, answer_text in zip(
-            batch["question"], completions, batch["answer"]
-        ):
+    for start in tqdm(range(0, len(dataset), batch_size), desc="GSM8K eval"):
+        batch_rows = [
+            dataset[idx] for idx in range(start, min(start + batch_size, len(dataset)))
+        ]
+        prompts = [row["prompt"] for row in batch_rows]
+        outputs = llm.generate(prompts, sampling_params, use_tqdm=False)
+        completions = [output.outputs[0].text if output.outputs else "" for output in outputs]
+        for row, completion in zip(batch_rows, completions):
+            answer_text = row["answer"]
             result = verify_math_answer(completion, answer_text)
             is_correct = result.correct
             correct += int(is_correct)
             total += 1
             rows.append(
                 {
-                    "question": question,
+                    "question": row["question"],
                     "completion": completion,
                     "prediction": result.prediction,
                     "reference_answer": result.reference,
@@ -76,8 +61,13 @@ def evaluate_gsm8k_model(
                     "correct": is_correct,
                 }
             )
-    tokenizer.padding_side = old_padding_side
-    metrics = {"dataset": dataset_name, "split": split, "total": total, "correct": correct, "accuracy": correct / max(total, 1)}
+    metrics = {
+        "dataset": dataset_name,
+        "split": split,
+        "total": total,
+        "correct": correct,
+        "accuracy": correct / max(total, 1),
+    }
     if output_path is not None:
         output_path = Path(output_path)
         output_path.parent.mkdir(parents=True, exist_ok=True)

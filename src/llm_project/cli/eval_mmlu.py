@@ -2,17 +2,16 @@ from __future__ import annotations
 
 import argparse
 import json
-
-import torch
+import os
 
 from llm_project.config import load_config, to_plain_dict
 from llm_project.evaluation.mmlu_eval import evaluate_mmlu_model
-from llm_project.models import load_causal_lm, load_tokenizer
+from llm_project.evaluation.vllm_utils import load_vllm_llm
 
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
-        description="Evaluate a model on MMLU using generated final answers"
+        description="Evaluate a model on MMLU using vLLM generated final answers"
     )
     parser.add_argument("--config", type=str, default="configs/eval.yaml")
     parser.add_argument("--model", type=str, default=None, help="Override model.name_or_path")
@@ -21,9 +20,6 @@ def parse_args() -> argparse.Namespace:
     )
     parser.add_argument("--output", type=str, default=None, help="Override mmlu.output_path")
     parser.add_argument("--max_samples_per_subject", type=int, default=None)
-    parser.add_argument(
-        "--attn", type=str, default=None, help="Override attn implementation, e.g. eager"
-    )
     parser.add_argument(
         "--stage", type=str, default="custom", help="Metric stage name, e.g. base, sft, grpo"
     )
@@ -39,19 +35,15 @@ def main() -> None:
     wandb_config = to_plain_dict(cfg)
     wandb_config["eval_stage"] = args.stage
     wandb_config["model"]["name_or_path"] = model_name
-    wandb.init(project="llm-course-project", name=f"{args.stage}_mmlu_eval", config=wandb_config)
-    tokenizer = load_tokenizer(
-        model_name, trust_remote_code=bool(cfg.model.trust_remote_code), padding_side="left"
+    wandb.init(
+        project="llm-course-project",
+        entity=os.environ["WANDB_ENTITY"],
+        name=f"{args.stage}_mmlu_eval",
+        config=wandb_config,
     )
-    model = load_causal_lm(
-        model_name,
-        trust_remote_code=bool(cfg.model.trust_remote_code),
-        dtype=cfg.model.dtype,
-        attn_implementation=args.attn or cfg.model.attn_implementation,
-    ).cuda()
+    llm = load_vllm_llm(model_name, cfg)
     metrics = evaluate_mmlu_model(
-        model,
-        tokenizer,
+        llm,
         dataset_name=cfg.mmlu.dataset_name,
         subjects=args.subjects or cfg.mmlu.subjects,
         split=cfg.mmlu.split,
@@ -76,7 +68,6 @@ def main() -> None:
     wandb.log(wandb_metrics)
     wandb.finish()
     print(json.dumps({k: v for k, v in metrics.items() if k != "per_subject"}, indent=2))
-    torch.cuda.empty_cache()
 
 
 if __name__ == "__main__":

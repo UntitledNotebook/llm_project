@@ -2,14 +2,20 @@ model:
   name_or_path: Qwen/Qwen2.5-1.5B
   trust_remote_code: true
   dtype: bf16
-  attn_implementation: flash_attention_2
+
+vllm:
+  tensor_parallel_size: 1
+  gpu_memory_utilization: 0.9
+  max_model_len: null
+  max_num_seqs: 64
+  download_dir: /mnt/zhangchenming/.cache/huggingface
 
 gsm8k:
   dataset_name: openai/gsm8k
   config_name: main
   split: test
   max_samples: null
-  batch_size: 4
+  batch_size: 64
   max_new_tokens: 512
   temperature: 0.0
   top_p: 1.0
@@ -20,7 +26,7 @@ mmlu:
   split: test
   subjects: elementary_mathematics,high_school_mathematics,college_mathematics
   max_samples_per_subject: null
-  batch_size: 1
+  batch_size: 64
   max_new_tokens: 512
   temperature: 0.0
   top_p: 1.0

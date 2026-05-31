@@ -5,7 +5,6 @@ import re
 from pathlib import Path
 from typing import Any
 
-import torch
 from tqdm import tqdm
 
 from llm_project.data.prompts import build_mmlu_prompt
@@ -67,10 +66,8 @@ def mmlu_answers_match(completion: str, reference: str) -> bool:
     return extract_mmlu_answer(completion) == normalize_mmlu_answer(reference)
 
 
-@torch.no_grad()
 def evaluate_mmlu_model(
-    model: Any,
-    tokenizer: Any,
+    llm: Any,
     *,
     dataset_name: str = "cais/mmlu",
     subjects: str | list[str] = "all",
@@ -82,9 +79,8 @@ def evaluate_mmlu_model(
     top_p: float = 1.0,
     output_path: str | Path | None = None,
 ) -> dict[str, Any]:
+    from vllm import SamplingParams
 
-    model.eval()
-    device = next(model.parameters()).device
     subject_list = resolve_subjects(subjects)
     all_rows: list[dict[str, Any]] = []
     per_subject: dict[str, dict[str, Any]] = {}
@@ -92,73 +88,56 @@ def evaluate_mmlu_model(
     total_count = 0
     letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
     batch_size = max(1, int(batch_size))
+    sampling_params = SamplingParams(
+        max_tokens=int(max_new_tokens),
+        temperature=float(temperature),
+        top_p=float(top_p),
+        skip_special_tokens=True,
+    )
 
-    old_padding_side = tokenizer.padding_side
-    tokenizer.padding_side = "left"
-    try:
-        for subject in tqdm(subject_list, desc="MMLU subjects"):
-            dataset = load_mmlu_subject(
-                dataset_name, subject, split=split, max_samples=max_samples_per_subject
-            )
-            subject_correct = 0
-            subject_total = len(dataset)
+    for subject in tqdm(subject_list, desc="MMLU subjects"):
+        dataset = load_mmlu_subject(
+            dataset_name, subject, split=split, max_samples=max_samples_per_subject
+        )
+        subject_correct = 0
+        subject_total = len(dataset)
 
-            for start in tqdm(range(0, subject_total, batch_size), desc=subject, leave=False):
-                batch_end = min(start + batch_size, subject_total)
-                batch_rows = [dict(dataset[idx]) for idx in range(start, batch_end)]
-                prompts: list[str] = []
-                gold_letters: list[str] = []
+        for start in tqdm(range(0, subject_total, batch_size), desc=subject, leave=False):
+            batch_end = min(start + batch_size, subject_total)
+            batch_rows = [dict(dataset[idx]) for idx in range(start, batch_end)]
+            prompts: list[str] = []
+            gold_letters: list[str] = []
 
-                for row in batch_rows:
-                    choices = list(row["choices"])
-                    prompts.append(build_mmlu_prompt(subject, row["question"], choices))
-                    gold_letters.append(letters[row["answer"]])
+            for row in batch_rows:
+                choices = list(row["choices"])
+                prompts.append(build_mmlu_prompt(subject, row["question"], choices))
+                gold_letters.append(letters[row["answer"]])
 
-                encoded = tokenizer(
-                    prompts,
-                    return_tensors="pt",
-                    padding=True,
-                    add_special_tokens=False,
-                ).to(device)
-                prompt_len = encoded.input_ids.size(1)
-                generated = model.generate(
-                    **encoded,
-                    max_new_tokens=max_new_tokens,
-                    do_sample=temperature > 0.0,
-                    temperature=temperature if temperature > 0.0 else None,
-                    top_p=top_p if temperature > 0.0 else None,
-                    pad_token_id=tokenizer.pad_token_id,
-                    eos_token_id=tokenizer.eos_token_id,
-                    use_cache=True,
+            outputs = llm.generate(prompts, sampling_params, use_tqdm=False)
+            completions = [output.outputs[0].text if output.outputs else "" for output in outputs]
+
+            for row, completion, gold in zip(batch_rows, completions, gold_letters):
+                prediction = extract_mmlu_answer(completion)
+                correct = prediction == gold
+                subject_correct += int(correct)
+                total_correct += int(correct)
+                total_count += 1
+                all_rows.append(
+                    {
+                        "subject": subject,
+                        "question": row["question"],
+                        "completion": completion,
+                        "prediction": prediction,
+                        "gold": gold,
+                        "correct": correct,
+                    }
                 )
-                completions = tokenizer.batch_decode(
-                    generated[:, prompt_len:], skip_special_tokens=True
-                )
 
-                for row, completion, gold in zip(batch_rows, completions, gold_letters):
-                    prediction = extract_mmlu_answer(completion)
-                    correct = prediction == gold
-                    subject_correct += int(correct)
-                    total_correct += int(correct)
-                    total_count += 1
-                    all_rows.append(
-                        {
-                            "subject": subject,
-                            "question": row["question"],
-                            "completion": completion,
-                            "prediction": prediction,
-                            "gold": gold,
-                            "correct": correct,
-                        }
-                    )
-
-            per_subject[subject] = {
-                "total": subject_total,
-                "correct": subject_correct,
-                "accuracy": subject_correct / max(1, subject_total),
-            }
-    finally:
-        tokenizer.padding_side = old_padding_side
+        per_subject[subject] = {
+            "total": subject_total,
+            "correct": subject_correct,
+            "accuracy": subject_correct / max(1, subject_total),
+        }
 
     metrics = {
         "dataset": dataset_name,

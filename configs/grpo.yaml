@@ -20,7 +20,6 @@ dataset:
   test_split: test
   max_prompt_length: 768
   max_train_samples: null
-  max_eval_samples: 256
 
 rollout:
   group_size: 4
@@ -46,6 +45,5 @@ train:
   beta_kl: 0.02
   max_grad_norm: 1.0
   logging_steps: 1
-  eval_steps: 100
   save_hf_at_end: true
   save_hf_each_epoch: true
