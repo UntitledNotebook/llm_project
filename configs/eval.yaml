@@ -8,7 +8,7 @@ vllm:
   gpu_memory_utilization: 0.9
   max_model_len: null
   max_num_seqs: 64
-  download_dir: /mnt/zhangchenming/.cache/huggingface
+  download_dir: /mnt/zhangchenming/.cache/huggingface/hub
 
 gsm8k:
   prompt_builder: simple  # available: simple, step_by_step

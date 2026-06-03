@@ -23,7 +23,7 @@ def load_vllm_llm(model_name_or_path: str, cfg: Any):
     from vllm import LLM
 
     vllm_cfg = cfg.get("vllm", {})
-    download_dir = vllm_cfg.get("download_dir") or os.environ["HF_HOME"]
+    download_dir = vllm_cfg.get("download_dir") or os.path.join(os.environ["HF_HOME"], "hub")
     kwargs: dict[str, Any] = {
         "model": model_name_or_path,
         "trust_remote_code": bool(cfg.model.get("trust_remote_code", True)),
