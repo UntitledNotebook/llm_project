@@ -11,12 +11,13 @@ vllm:
   download_dir: /mnt/zhangchenming/.cache/huggingface
 
 gsm8k:
+  prompt_builder: simple  # available: simple, step_by_step
   dataset_name: openai/gsm8k
   config_name: main
   split: test
   max_samples: null
   batch_size: 64
-  max_new_tokens: 512
+  max_new_tokens: 1024
   temperature: 0.0
   top_p: 1.0
   output_path: outputs/eval/gsm8k.json
@@ -27,7 +28,7 @@ mmlu:
   subjects: elementary_mathematics,high_school_mathematics,college_mathematics
   max_samples_per_subject: null
   batch_size: 64
-  max_new_tokens: 512
+  max_new_tokens: 1024
   temperature: 0.0
   top_p: 1.0
   output_path: outputs/eval/mmlu.json

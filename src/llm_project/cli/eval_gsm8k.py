@@ -15,6 +15,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--model", type=str, default=None, help="Override model.name_or_path")
     parser.add_argument("--output", type=str, default=None, help="Override gsm8k.output_path")
     parser.add_argument("--max_samples", type=int, default=None)
+    parser.add_argument("--run_name", type=str, default=None, help="Set wandb run name")
     parser.add_argument(
         "--stage", type=str, default="custom", help="Metric stage name, e.g. base, sft, grpo"
     )
@@ -33,7 +34,7 @@ def main() -> None:
     wandb.init(
         project="llm-course-project",
         entity=os.environ["WANDB_ENTITY"],
-        name=f"{args.stage}_gsm8k_eval",
+        name=args.run_name or cfg.get("run_name"),
         config=wandb_config,
     )
     llm = load_vllm_llm(model_name, cfg)
@@ -47,6 +48,7 @@ def main() -> None:
         max_new_tokens=int(cfg.gsm8k.max_new_tokens),
         temperature=float(cfg.gsm8k.temperature),
         top_p=float(cfg.gsm8k.top_p),
+        prompt_builder=cfg.gsm8k.get("prompt_builder"),
         output_path=args.output or cfg.gsm8k.output_path,
     )
     wandb.log(

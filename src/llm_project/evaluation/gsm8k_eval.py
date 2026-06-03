@@ -21,12 +21,13 @@ def evaluate_gsm8k_model(
     max_new_tokens: int = 512,
     temperature: float = 0.0,
     top_p: float = 1.0,
+    prompt_builder: str | None = None,
     output_path: str | Path | None = None,
 ) -> dict[str, Any]:
     from vllm import SamplingParams
 
     raw = load_gsm8k_raw(dataset_name, config_name, split, max_samples)
-    dataset = GSM8KPromptDataset(raw)
+    dataset = GSM8KPromptDataset(raw, prompt_builder=prompt_builder)
     batch_size = max(1, int(batch_size))
     sampling_params = SamplingParams(
         max_tokens=int(max_new_tokens),
@@ -64,6 +65,7 @@ def evaluate_gsm8k_model(
     metrics = {
         "dataset": dataset_name,
         "split": split,
+        "prompt_builder": dataset.prompt_builder,
         "total": total,
         "correct": correct,
         "accuracy": correct / max(total, 1),

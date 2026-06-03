@@ -39,6 +39,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--config", type=str, required=True, help="Path to configs/sft.yaml")
     parser.add_argument("--ds_config", type=str, required=True, help="Path to DeepSpeed JSON config")
     parser.add_argument("--local_rank", type=int, default=-1, help="Injected by DeepSpeed launcher")
+    parser.add_argument("--run_name", type=str, default=None, help="Override wandb run name")
     return parser.parse_args()
 
 
@@ -88,16 +89,19 @@ def main() -> None:
     train_raw, val_raw = train_validation_split(raw, cfg.dataset.validation_size, int(cfg.seed))
     if cfg.dataset.max_eval_samples is not None:
         val_raw = val_raw.select(range(min(int(cfg.dataset.max_eval_samples), len(val_raw))))
+    prompt_builder = cfg.dataset.get("prompt_builder")
 
     train_dataset = SFTDataset(
         train_raw,
         tokenizer,
         max_seq_length=cfg.dataset.max_seq_length,
+        prompt_builder=prompt_builder,
     )
     val_dataset = SFTDataset(
         val_raw,
         tokenizer,
         max_seq_length=cfg.dataset.max_seq_length,
+        prompt_builder=prompt_builder,
     )
     collator = SFTDataCollator(tokenizer)
 
@@ -161,10 +165,11 @@ def main() -> None:
     if is_main_process():
         import wandb
 
-        wandb.init(project="llm-course-project", name=cfg.run_name, config=to_plain_dict(cfg))
+        wandb.init(project="llm-course-project", name=args.run_name or cfg.run_name, config=to_plain_dict(cfg))
     global_step = 0
     print_rank0(
         f"SFT start: train_examples={len(train_dataset)} val_examples={len(val_dataset)} "
+        f"prompt_builder={train_dataset.prompt_builder} "
         f"world_size={world_size()} total_update_steps≈{total_update_steps}"
     )
 

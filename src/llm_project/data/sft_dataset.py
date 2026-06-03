@@ -7,7 +7,7 @@ import torch
 from datasets import Dataset, load_dataset
 from torch.utils.data import Dataset as TorchDataset
 
-from llm_project.data.prompts import build_math_sft_prompt
+from llm_project.data.prompts import build_gsm8k_prompt
 
 
 @dataclass
@@ -39,10 +39,12 @@ class SFTDataset(TorchDataset):
         tokenizer,
         *,
         max_seq_length: int,
+        prompt_builder: str | None = "simple",
     ) -> None:
         self.dataset = hf_dataset
         self.tokenizer = tokenizer
         self.max_seq_length = int(max_seq_length)
+        self.prompt_builder = prompt_builder
 
     def __len__(self) -> int:
         return len(self.dataset)
@@ -52,7 +54,7 @@ class SFTDataset(TorchDataset):
         response = row.get("solution")
         problem_text = str(problem).strip()
         response_text = str(response).strip()
-        prompt = build_math_sft_prompt(problem_text)
+        prompt = build_gsm8k_prompt(problem_text, prompt_builder=self.prompt_builder)
         return SFTExample(prompt=prompt, response=response_text)
 
     def __getitem__(self, index: int) -> dict[str, torch.Tensor]:

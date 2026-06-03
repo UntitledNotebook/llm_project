@@ -20,6 +20,7 @@ def parse_args() -> argparse.Namespace:
     )
     parser.add_argument("--output", type=str, default=None, help="Override mmlu.output_path")
     parser.add_argument("--max_samples_per_subject", type=int, default=None)
+    parser.add_argument("--run_name", type=str, default=None, help="Set wandb run name")
     parser.add_argument(
         "--stage", type=str, default="custom", help="Metric stage name, e.g. base, sft, grpo"
     )
@@ -38,7 +39,7 @@ def main() -> None:
     wandb.init(
         project="llm-course-project",
         entity=os.environ["WANDB_ENTITY"],
-        name=f"{args.stage}_mmlu_eval",
+        name=args.run_name or cfg.get("run_name"),
         config=wandb_config,
     )
     llm = load_vllm_llm(model_name, cfg)

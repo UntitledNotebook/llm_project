@@ -10,6 +10,7 @@ model:
   attn_implementation: flash_attention_2  # change to eager if flash-attn is unavailable
 
 dataset:
+  prompt_builder: simple  # available: simple, step_by_step
   validation_size: 256
   max_train_samples: null    # set to a small integer for debugging
   max_eval_samples: 256

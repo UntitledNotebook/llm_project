@@ -21,8 +21,14 @@ def load_gsm8k_raw(
 
 
 class GSM8KPromptDataset(TorchDataset):
-    def __init__(self, hf_dataset: Dataset) -> None:
+    def __init__(
+        self,
+        hf_dataset: Dataset,
+        *,
+        prompt_builder: str | None = "simple",
+    ) -> None:
         self.dataset = hf_dataset
+        self.prompt_builder = prompt_builder
 
     def __len__(self) -> int:
         return len(self.dataset)
@@ -33,7 +39,7 @@ class GSM8KPromptDataset(TorchDataset):
         answer_text = str(row["answer"])
         return {
             "question": question,
-            "prompt": build_gsm8k_prompt(question),
+            "prompt": build_gsm8k_prompt(question, prompt_builder=self.prompt_builder),
             "answer": answer_text,
         }
 
