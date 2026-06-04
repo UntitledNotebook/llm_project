@@ -3,20 +3,7 @@ from __future__ import annotations
 import os
 from typing import Any
 
-
-def _vllm_dtype(dtype: Any) -> str:
-    if dtype is None:
-        return "auto"
-    normalized = str(dtype).lower()
-    if normalized in {"auto", "none"}:
-        return "auto"
-    if normalized in {"bf16", "bfloat16"}:
-        return "bfloat16"
-    if normalized in {"fp16", "float16", "half"}:
-        return "float16"
-    if normalized in {"fp32", "float32"}:
-        return "float32"
-    return str(dtype)
+from llm_project.dtypes import vllm_dtype_from_str
 
 
 def load_vllm_llm(model_name_or_path: str, cfg: Any):
@@ -27,7 +14,7 @@ def load_vllm_llm(model_name_or_path: str, cfg: Any):
     kwargs: dict[str, Any] = {
         "model": model_name_or_path,
         "trust_remote_code": bool(cfg.model.get("trust_remote_code", True)),
-        "dtype": _vllm_dtype(cfg.model.get("dtype", "auto")),
+        "dtype": vllm_dtype_from_str(cfg.model.get("dtype", "auto")),
         "tensor_parallel_size": int(vllm_cfg.get("tensor_parallel_size", 1)),
         "gpu_memory_utilization": float(vllm_cfg.get("gpu_memory_utilization", 0.9)),
         "download_dir": download_dir,

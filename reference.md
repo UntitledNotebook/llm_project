@@ -2,7 +2,7 @@
 
 ## Course requirement source
 
-- `2026_llm_course_project.pdf`, Choice A: Post-training Implementation. This framework covers Part 1 SFT and Part 2 RL/GRPO only. Part 3 open exploration is intentionally not included.
+- `2026_llm_course_project.pdf`, Choice A: Post-training Implementation. This framework covers Part 1 SFT, Part 2 RL/GRPO, and a Part 3 vLLM rollout acceleration exploration.
 
 ## Code bases and documentation referenced
 
@@ -11,7 +11,7 @@
 - Microsoft DeepSpeed documentation and examples for multi-GPU launch, ZeRO-2/ZeRO-3 configuration, and checkpointing.
 - Dao-AILab FlashAttention release naming convention for choosing a pre-built wheel matching CUDA/PyTorch/Python/CXX11 ABI.
 - PyTorch official previous-version installation table for selecting a PyTorch 2.7 wheel.
-- vLLM package is included because the course environment lists `vllm==0.9.0`; rollout acceleration with vLLM is not implemented here because it is part of the optional open-exploration direction.
+- Hugging Face TRL GRPO/vLLM documentation and source were referenced for colocate/server rollout structure and the training-inference mismatch motivation. The implementation here does not depend on TRL.
 
 ## Research papers
 

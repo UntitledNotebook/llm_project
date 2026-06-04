@@ -32,6 +32,8 @@ dependencies = [
     "packaging>=24.0",
     "tensorboard>=2.16.0",
     "ninja>=1.11.1",
+    "fastapi>=0.110.0",
+    "uvicorn[standard]>=0.29.0",
     "vllm==0.8.5"
 ]
 

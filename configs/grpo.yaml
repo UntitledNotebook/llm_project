@@ -1,6 +1,4 @@
-# Choice A / Part 2: GRPO config.
-# This framework uses Hugging Face generation for rollouts. vLLM rollout acceleration is intentionally omitted
-# because it belongs to the open-exploration direction, not Part 2.
+# Choice A / Part 2+3: GRPO config with optional vLLM rollout acceleration.
 run_name: grpo_qwen25_1p5b_gsm8k
 seed: 1234
 
@@ -23,11 +21,25 @@ dataset:
   max_train_samples: null
 
 rollout:
+  backend: hf  # available: hf, vllm_colocate, vllm_server
   group_size: 4
   max_new_tokens: 512
   temperature: 0.8
   top_p: 0.95
   do_sample: true
+  vllm:
+    server_url: http://127.0.0.1:8000
+    sync_method: tmp  # available for vllm_server: tmp, pynccl
+    importance_sampling: true
+    importance_sampling_cap: 3.0
+    tmp_dir: /tmp/llm_project_vllm_rollout
+    pynccl_host: 127.0.0.1
+    pynccl_port: 29577
+    tensor_parallel_size: 1
+    gpu_memory_utilization: 0.8
+    max_model_len: null
+    max_num_seqs: 64
+    download_dir: /mnt/zhangchenming/.cache/huggingface/hub
 
 reward:
   correct_answer_reward: 1.0
@@ -44,7 +56,8 @@ train:
   warmup_ratio: 0.03
   clip_range: 0.2
   beta_kl: 0.02
+  loss_type: grpo  # available: grpo, dr_grpo
   max_grad_norm: 1.0
   logging_steps: 1
-  save_hf_at_end: true
+  save_hf_at_end: false
   save_hf_each_epoch: true

@@ -1,11 +1,10 @@
-# Choice A Part 1–2 code framework: SFT + GRPO
+# Choice A code framework: SFT + GRPO + vLLM rollouts
 
 This repository is a code framework for the course project **Choice A: Post-training Implementation**, covering:
 
 - **Part 1: SFT** on `Qwen/Qwen2.5-1.5B` using the `AI-MO/NuminaMath-CoT` subset with `source == "gsm8k"`.
 - **Part 2: GRPO** on `Qwen/Qwen2.5-1.5B` using GSM8K.
-
-Part 3 open exploration is intentionally omitted.
+- **Part 3: vLLM rollout acceleration** with HF baseline, colocate mode, and HTTP server mode.
 
 ## Repository layout
 
@@ -30,6 +29,7 @@ Part 3 open exploration is intentionally omitted.
 │   ├── data/                     # dataset loading and prompt formatting
 │   ├── evaluation/               # GSM8K and MMLU evaluators
 │   ├── training/                 # losses, rewards, generation, checkpoint helpers
+│   ├── rollout/                  # HF/vLLM rollout backends and weight sync helpers
 │   ├── config.py
 │   ├── distributed.py
 │   ├── math_utils.py
@@ -187,6 +187,17 @@ Evaluate the final GRPO checkpoint:
 bash scripts/eval_grpo.sh outputs/grpo_qwen25_1p5b_gsm8k/hf
 ```
 
+For Part 3 rollout benchmarking, use the dedicated configs and scripts:
+
+```bash
+bash scripts/run_grpo_hf_baseline.sh
+bash scripts/run_grpo_vllm_colocate_8gpu.sh
+bash scripts/run_grpo_vllm_server_pynccl.sh
+bash scripts/run_grpo_vllm_server_tmp.sh
+```
+
+The benchmark configs keep the same short GRPO setup while switching only the rollout backend. vLLM modes request sampled-token logprobs and apply token-level truncated importance sampling in the GRPO policy loss.
+
 For the report, export or screenshot the wandb chart containing `grpo/train/reward`, then run final vLLM evaluation with `scripts/eval_grpo.sh`.
 
 ## 6. Submit-ready result files to collect
@@ -215,7 +226,7 @@ Use `report_templates/results_tables.md` to copy results into the final report.
 
 SFT uses standard next-token prediction with labels masked over the prompt tokens. The data collator pads `input_ids`, `attention_mask`, and `labels`, using `-100` for label padding.
 
-GRPO uses grouped rollouts per prompt. Rewards are normalized within each group to produce advantages. The loss uses a clipped policy-gradient term plus a reference-model KL penalty. GSM8K rewards are based on exact normalized numeric answer matching, with an optional small formatting reward.
+GRPO uses grouped rollouts per prompt. Original GRPO z-normalizes rewards within each group to produce advantages, while Dr. GRPO uses mean-centered rewards without reward-std normalization. The loss uses a clipped policy-gradient term plus a reference-model KL penalty. GSM8K rewards are based on exact normalized numeric answer matching, with an optional small formatting reward.
 
 Standalone MMLU and GSM8K evaluation use vLLM generation. MMLU compares the extracted final boxed answer against `A/B/C/D`, accepting either boxed letters or boxed `1`-through-`4` aliases. GSM8K uses numeric answer extraction.
 

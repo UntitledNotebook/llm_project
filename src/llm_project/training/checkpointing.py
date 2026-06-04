@@ -16,8 +16,7 @@ def save_hf_checkpoint(model_engine: Any, tokenizer: Any, output_dir: str | Path
     output_dir = Path(output_dir)
     if is_main_process():
         output_dir.mkdir(parents=True, exist_ok=True)
-        model = model_engine.module if hasattr(model_engine, "module") else model_engine
-        model.save_pretrained(output_dir, safe_serialization=True)
+        model_engine.module.save_pretrained(output_dir, safe_serialization=True)
         tokenizer.save_pretrained(output_dir)
         print_rank0(f"Saved HF checkpoint to {output_dir}")
     barrier()

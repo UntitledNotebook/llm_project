@@ -2,21 +2,9 @@ from __future__ import annotations
 
 from typing import Any
 
-import torch
 from transformers import AutoModelForCausalLM, AutoTokenizer
 
-
-def dtype_from_str(dtype: str | None) -> torch.dtype | None:
-    if dtype is None or str(dtype).lower() in {"auto", "none"}:
-        return None
-    normalized = str(dtype).lower()
-    if normalized in {"bf16", "bfloat16"}:
-        return torch.bfloat16
-    if normalized in {"fp16", "float16", "half"}:
-        return torch.float16
-    if normalized in {"fp32", "float32"}:
-        return torch.float32
-    raise ValueError(f"Unsupported dtype: {dtype}")
+from llm_project.dtypes import torch_dtype_from_str
 
 
 def load_tokenizer(model_name_or_path: str, trust_remote_code: bool = True, padding_side: str = "right"):
@@ -42,7 +30,7 @@ def load_causal_lm(
 ):
     kwargs: dict[str, Any] = {
         "trust_remote_code": trust_remote_code,
-        "torch_dtype": dtype_from_str(dtype),
+        "torch_dtype": torch_dtype_from_str(dtype),
         "low_cpu_mem_usage": low_cpu_mem_usage,
     }
     if attn_implementation and attn_implementation.lower() not in {"none", "auto"}:
@@ -66,5 +54,7 @@ def enable_training_mode(model) -> None:
 
 def freeze_model(model) -> None:
     model.eval()
+    if hasattr(model.config, "use_cache"):
+        model.config.use_cache = False
     for parameter in model.parameters():
         parameter.requires_grad_(False)
