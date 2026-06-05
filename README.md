@@ -11,9 +11,12 @@ This repository is a code framework for the course project **Choice A: Post-trai
 ```text
 .
 ├── configs/
-│   ├── sft.yaml                  # SFT model/data/training config
-│   ├── grpo.yaml                 # GRPO model/data/reward/training config
-│   ├── eval.yaml                 # GSM8K and MMLU evaluation config
+│   ├── README.md                 # config layout notes
+│   ├── templates/                 # canonical hand-edited YAML templates
+│   │   ├── sft.yaml
+│   │   ├── grpo.yaml
+│   │   └── eval.yaml
+│   ├── generated/                 # generated SFT, GRPO, and eval YAML variants
 │   ├── deepspeed_zero2.json      # recommended default for 8 × RTX 4090
 │   └── deepspeed_zero3.json      # optional memory-saving config
 ├── scripts/
@@ -62,15 +65,15 @@ The provided server has 8 × RTX 4090 GPUs, so the default scripts use `--num_gp
 
 Most changes should be made in these files:
 
-- `configs/sft.yaml`: model path, NuminaMath filtering, max sequence length, SFT learning rate, epoch count, output directory.
-- `configs/grpo.yaml`: initial policy path, reference model path, rollout group size, max generation length, reward weights, KL coefficient, GRPO learning rate.
-- `configs/eval.yaml`: evaluation model path defaults, GSM8K/MMLU sample limits, output paths.
+- `configs/templates/sft.yaml`: model path, NuminaMath filtering, max sequence length, SFT learning rate, epoch count, output directory.
+- `configs/templates/grpo.yaml`: initial policy path, reference model path, rollout group size, max generation length, reward weights, KL coefficient, GRPO learning rate.
+- `configs/templates/eval.yaml`: evaluation model path defaults, GSM8K/MMLU sample limits, output paths.
 - `configs/deepspeed_zero2.json`: micro-batch size, gradient accumulation, bf16, ZeRO stage.
 
 For a quick smoke test, set these values before a full run:
 
 ```yaml
-# configs/sft.yaml
+# configs/templates/sft.yaml
 dataset:
   max_train_samples: 64
   max_eval_samples: 32
@@ -80,7 +83,7 @@ train:
 ```
 
 ```yaml
-# configs/grpo.yaml
+# configs/templates/grpo.yaml
 dataset:
   max_train_samples: 32
 rollout:
@@ -123,7 +126,7 @@ Equivalent explicit command:
 
 ```bash
 CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,7 deepspeed --num_gpus 8 -m llm_project.cli.train_sft \
-  --config configs/sft.yaml \
+  --config configs/templates/sft.yaml \
   --ds_config configs/deepspeed_zero2.json
 ```
 
@@ -148,7 +151,7 @@ For the report, export or screenshot the wandb chart containing `sft/train/loss`
 
 ## 5. Part 2: Run GRPO
 
-By default, GRPO starts from `Qwen/Qwen2.5-1.5B`. To run RL after the SFT checkpoint, edit `configs/grpo.yaml`:
+By default, GRPO starts from `Qwen/Qwen2.5-1.5B`. To run RL after the SFT checkpoint, edit `configs/templates/grpo.yaml`:
 
 ```yaml
 model:
@@ -166,7 +169,7 @@ Equivalent explicit command:
 
 ```bash
 CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,7 deepspeed --num_gpus 8 -m llm_project.cli.train_grpo \
-  --config configs/grpo.yaml \
+  --config configs/templates/grpo.yaml \
   --ds_config configs/deepspeed_zero2.json
 ```
 

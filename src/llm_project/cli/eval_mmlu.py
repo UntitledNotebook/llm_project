@@ -13,7 +13,7 @@ def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         description="Evaluate a model on MMLU using vLLM generated final answers"
     )
-    parser.add_argument("--config", type=str, default="configs/eval.yaml")
+    parser.add_argument("--config", type=str, default="configs/templates/eval.yaml")
     parser.add_argument("--model", type=str, default=None, help="Override model.name_or_path")
     parser.add_argument(
         "--subjects", type=str, default=None, help="all or comma-separated MMLU subjects"

@@ -36,7 +36,7 @@ from llm_project.training.checkpointing import save_hf_checkpoint
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="SFT training for Choice A Part 1")
-    parser.add_argument("--config", type=str, required=True, help="Path to configs/sft.yaml")
+    parser.add_argument("--config", type=str, required=True, help="Path to configs/templates/sft.yaml")
     parser.add_argument("--ds_config", type=str, required=True, help="Path to DeepSpeed JSON config")
     parser.add_argument("--local_rank", type=int, default=-1, help="Injected by DeepSpeed launcher")
     parser.add_argument("--run_name", type=str, default=None, help="Override wandb run name")

@@ -11,7 +11,7 @@ from llm_project.evaluation.vllm_utils import load_vllm_llm
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Evaluate a model on GSM8K with vLLM")
-    parser.add_argument("--config", type=str, default="configs/eval.yaml")
+    parser.add_argument("--config", type=str, default="configs/templates/eval.yaml")
     parser.add_argument("--model", type=str, default=None, help="Override model.name_or_path")
     parser.add_argument("--output", type=str, default=None, help="Override gsm8k.output_path")
     parser.add_argument("--max_samples", type=int, default=None)

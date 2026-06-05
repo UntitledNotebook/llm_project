@@ -132,7 +132,7 @@ PY
 
 `undefined symbol` or `GLIBCXX` errors from `flash_attn_2_cuda`: the flash-attn binary does not match your PyTorch CXX11 ABI or CUDA tag. On this machine, build `flash-attn==2.8.2` from source with the command in section 4.
 
-`ImportError: flash_attn`: either install the matching wheel or set `model.attn_implementation: eager` in `configs/sft.yaml`, `configs/grpo.yaml`, and `configs/eval.yaml` for a slower no-flash-attn run.
+`ImportError: flash_attn`: either install the matching wheel or set `model.attn_implementation: eager` in `configs/templates/sft.yaml`, `configs/templates/grpo.yaml`, and `configs/templates/eval.yaml` for a slower no-flash-attn run.
 
 `vllm` tries to upgrade PyTorch to 2.7: make sure `requirements/base.txt` uses `vllm==0.8.5`, not `vllm==0.9.0`.
 

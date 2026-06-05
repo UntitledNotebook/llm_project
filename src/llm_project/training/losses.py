@@ -40,6 +40,7 @@ def compute_group_advantages(
         return (centered / std).view(-1)
     if loss_type == "dr_grpo":
         return centered.view(-1)
+    raise ValueError(f"Unsupported GRPO loss_type: {loss_type}")
 
 
 def _aggregate_token_loss(
@@ -58,6 +59,7 @@ def _aggregate_token_loss(
             raise ValueError("max_completion_length is required when loss_type='dr_grpo'")
         denom = values.new_tensor(float(values.size(0) * max_completion_length))
         return (values * mask).sum() / denom.clamp_min(eps)
+    raise ValueError(f"Unsupported GRPO loss_type: {loss_type}")
 
 
 @dataclass

@@ -36,7 +36,7 @@ from llm_project.training.rewards import GSM8KReward
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="GRPO training for Choice A Part 2/3")
-    parser.add_argument("--config", type=str, required=True, help="Path to configs/grpo.yaml")
+    parser.add_argument("--config", type=str, required=True, help="Path to configs/templates/grpo.yaml")
     parser.add_argument("--ds_config", type=str, required=True, help="Path to DeepSpeed JSON config")
     parser.add_argument("--local_rank", type=int, default=-1, help="Injected by DeepSpeed launcher")
     parser.add_argument("--run_name", type=str, default=None, help="Override wandb run name")
