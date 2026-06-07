@@ -1,0 +1,17 @@
+run_name,run_label,run_key,checkpoint_epoch,metric_label,accuracy
+grpo_hf_3epoch_grpo,"HF, GRPO loss",hf_grpo,1,GSM8K,0.7559
+grpo_hf_3epoch_grpo,"HF, GRPO loss",hf_grpo,1,MMLU,0.516
+grpo_hf_3epoch_grpo,"HF, GRPO loss",hf_grpo,2,GSM8K,0.7703
+grpo_hf_3epoch_grpo,"HF, GRPO loss",hf_grpo,2,MMLU,0.5013000000000001
+grpo_hf_3epoch_grpo,"HF, GRPO loss",hf_grpo,3,GSM8K,0.7619
+grpo_hf_3epoch_grpo,"HF, GRPO loss",hf_grpo,3,MMLU,0.49329999999999996
+grpo_hf_3epoch_dr_grpo,"HF, Dr. GRPO loss",hf_dr_grpo,1,GSM8K,0.7665000000000001
+grpo_hf_3epoch_dr_grpo,"HF, Dr. GRPO loss",hf_dr_grpo,1,MMLU,0.5241
+grpo_hf_3epoch_dr_grpo,"HF, Dr. GRPO loss",hf_dr_grpo,2,GSM8K,0.1736
+grpo_hf_3epoch_dr_grpo,"HF, Dr. GRPO loss",hf_dr_grpo,2,MMLU,0.1537
+grpo_vllm_colocate_3epoch_grpo_256,"vLLM colocate, GRPO loss, 256 tokens",vllm_colocate_grpo_256,1,GSM8K,0.7081000000000001
+grpo_vllm_colocate_3epoch_grpo_256,"vLLM colocate, GRPO loss, 256 tokens",vllm_colocate_grpo_256,1,MMLU,0.44520000000000004
+grpo_vllm_colocate_3epoch_grpo_256,"vLLM colocate, GRPO loss, 256 tokens",vllm_colocate_grpo_256,2,GSM8K,0.7392
+grpo_vllm_colocate_3epoch_grpo_256,"vLLM colocate, GRPO loss, 256 tokens",vllm_colocate_grpo_256,2,MMLU,0.4131
+grpo_vllm_colocate_3epoch_grpo_256,"vLLM colocate, GRPO loss, 256 tokens",vllm_colocate_grpo_256,3,GSM8K,0.7437
+grpo_vllm_colocate_3epoch_grpo_256,"vLLM colocate, GRPO loss, 256 tokens",vllm_colocate_grpo_256,3,MMLU,0.3971

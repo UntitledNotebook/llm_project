@@ -1,0 +1,19 @@
+prompt,prompt_label,checkpoint_epoch,metric_label,accuracy,wandb_metric,run_name,run_id
+simple,Simple SFT,1,GSM8K simple,0.6292645943896892,eval/sft/gsm8k_accuracy,eval_sft_simple_epoch001_gsm8k_simple,ajwout1p
+simple,Simple SFT,1,GSM8K step-by-step,0.6330553449583017,eval/sft/gsm8k_accuracy,eval_sft_simple_epoch001_gsm8k_step_by_step,hkdnepqw
+simple,Simple SFT,1,MMLU,0.18181818181818185,eval/sft/mmlu_accuracy,eval_sft_simple_epoch001_mmlu,nd1rrfkr
+simple,Simple SFT,2,GSM8K simple,0.6611068991660348,eval/sft/gsm8k_accuracy,eval_sft_simple_epoch002_gsm8k_simple,gf2ha5wd
+simple,Simple SFT,2,GSM8K step-by-step,0.6671721000758151,eval/sft/gsm8k_accuracy,eval_sft_simple_epoch002_gsm8k_step_by_step,6mmpf0u5
+simple,Simple SFT,2,MMLU,0.21256684491978609,eval/sft/mmlu_accuracy,eval_sft_simple_epoch002_mmlu,48gd66zm
+simple,Simple SFT,3,GSM8K simple,0.6671721000758151,eval/sft/gsm8k_accuracy,eval_sft_simple_epoch003_gsm8k_simple,s7s82zr2
+simple,Simple SFT,3,GSM8K step-by-step,0.6702047005307051,eval/sft/gsm8k_accuracy,eval_sft_simple_epoch003_gsm8k_step_by_step,soym2pno
+simple,Simple SFT,3,MMLU,0.24732620320855617,eval/sft/mmlu_accuracy,eval_sft_simple_epoch003_mmlu,975onk5p
+step_by_step,Step-by-step SFT,1,GSM8K simple,0.6269901440485216,eval/sft/gsm8k_accuracy,eval_sft_step_by_step_epoch001_gsm8k_simple,on1fu1js
+step_by_step,Step-by-step SFT,1,GSM8K step-by-step,0.6345716451857468,eval/sft/gsm8k_accuracy,eval_sft_step_by_step_epoch001_gsm8k_step_by_step,zbemg9lj
+step_by_step,Step-by-step SFT,1,MMLU,0.25,eval/sft/mmlu_accuracy,eval_sft_step_by_step_epoch001_mmlu,tc5qov2a
+step_by_step,Step-by-step SFT,2,GSM8K simple,0.6793025018953753,eval/sft/gsm8k_accuracy,eval_sft_step_by_step_epoch002_gsm8k_simple,50t4bq70
+step_by_step,Step-by-step SFT,2,GSM8K step-by-step,0.6770280515542078,eval/sft/gsm8k_accuracy,eval_sft_step_by_step_epoch002_gsm8k_step_by_step,0bw88159
+step_by_step,Step-by-step SFT,2,MMLU,0.36764705882352944,eval/sft/mmlu_accuracy,eval_sft_step_by_step_epoch002_mmlu,w2k27jwc
+step_by_step,Step-by-step SFT,3,GSM8K simple,0.6694465504169825,eval/sft/gsm8k_accuracy,eval_sft_step_by_step_epoch003_gsm8k_simple,e5bg1u76
+step_by_step,Step-by-step SFT,3,GSM8K step-by-step,0.6633813495072024,eval/sft/gsm8k_accuracy,eval_sft_step_by_step_epoch003_gsm8k_step_by_step,1w6x9pz6
+step_by_step,Step-by-step SFT,3,MMLU,0.34759358288770054,eval/sft/mmlu_accuracy,eval_sft_step_by_step_epoch003_mmlu,ri8zm639

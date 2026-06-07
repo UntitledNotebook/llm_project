@@ -1,0 +1,29 @@
+{
+  "entity": "zcm25-cvhw",
+  "project": "llm-course-project",
+  "inventory": "/mnt/zhangchenming/workspace/llm_project/report_templates/experiment_inventory.md",
+  "train_runs": [
+    {
+      "run_name": "grpo_hf_3epoch_grpo",
+      "run_label": "HF, GRPO loss",
+      "run_key": "hf_grpo",
+      "run_id": "gxjdrypi"
+    },
+    {
+      "run_name": "grpo_hf_3epoch_dr_grpo",
+      "run_label": "HF, Dr. GRPO loss",
+      "run_key": "hf_dr_grpo",
+      "run_id": "2iwypxqk"
+    },
+    {
+      "run_name": "grpo_vllm_colocate_3epoch_grpo_256",
+      "run_label": "vLLM colocate, GRPO loss, 256 tokens",
+      "run_key": "vllm_colocate_grpo_256",
+      "run_id": "o2na6bht"
+    }
+  ],
+  "train_metrics": [
+    "grpo/train/reward",
+    "grpo/train/kl"
+  ]
+}

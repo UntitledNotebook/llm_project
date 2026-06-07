@@ -1,0 +1,18 @@
+{
+  "entity": "zcm25-cvhw",
+  "project": "llm-course-project",
+  "inventory": "/mnt/zhangchenming/workspace/llm_project/report_templates/experiment_inventory.md",
+  "train_runs": [
+    {
+      "prompt": "simple",
+      "run_name": "sft_qwen25_1p5b_numina_gsm8k_simple_3epoch",
+      "run_id": "fn4tbt56"
+    },
+    {
+      "prompt": "step_by_step",
+      "run_name": "sft_qwen25_1p5b_numina_gsm8k_step_by_step_3epoch",
+      "run_id": "80n03ogg"
+    }
+  ],
+  "eval_run_count": 18
+}

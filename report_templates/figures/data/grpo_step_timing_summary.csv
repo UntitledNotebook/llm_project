@@ -1,0 +1,13 @@
+run_name,run_label,metric,metric_label,mean_sec
+grpo_vllm_colocate_3epoch_grpo,vLLM colocate,grpo/speed/step_time_sec,Step time,34.59111748748592
+grpo_vllm_colocate_3epoch_grpo,vLLM colocate,grpo/speed/sync_weights_time_sec,Sync weights time,0.009516332841345242
+grpo_vllm_colocate_3epoch_grpo,vLLM colocate,grpo/speed/rollout_time_sec,Rollout time,18.511371231095065
+grpo_vllm_server_pynccl_3epoch_grpo,"vLLM server, PyNccl",grpo/speed/step_time_sec,Step time,38.61452299925499
+grpo_vllm_server_pynccl_3epoch_grpo,"vLLM server, PyNccl",grpo/speed/sync_weights_time_sec,Sync weights time,0.1837115604383871
+grpo_vllm_server_pynccl_3epoch_grpo,"vLLM server, PyNccl",grpo/speed/rollout_time_sec,Rollout time,27.336666571195238
+grpo_vllm_server_tmp_3epoch_grpo,"vLLM server, tmp",grpo/speed/step_time_sec,Step time,38.732523893518376
+grpo_vllm_server_tmp_3epoch_grpo,"vLLM server, tmp",grpo/speed/sync_weights_time_sec,Sync weights time,5.1402922101086
+grpo_vllm_server_tmp_3epoch_grpo,"vLLM server, tmp",grpo/speed/rollout_time_sec,Rollout time,27.45269104673993
+grpo_hf_3epoch_grpo,HF generate,grpo/speed/step_time_sec,Step time,121.66580742623125
+grpo_hf_3epoch_grpo,HF generate,grpo/speed/sync_weights_time_sec,Sync weights time,0.0
+grpo_hf_3epoch_grpo,HF generate,grpo/speed/rollout_time_sec,Rollout time,87.8837647746663

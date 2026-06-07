@@ -1,0 +1,33 @@
+{
+  "entity": "zcm25-cvhw",
+  "project": "llm-course-project",
+  "inventory": "/mnt/zhangchenming/workspace/llm_project/report_templates/experiment_inventory.md",
+  "train_runs": [
+    {
+      "run_name": "grpo_vllm_colocate_3epoch_grpo",
+      "run_label": "vLLM colocate",
+      "run_id": "hdt2gk51"
+    },
+    {
+      "run_name": "grpo_vllm_server_pynccl_3epoch_grpo",
+      "run_label": "vLLM server, PyNccl",
+      "run_id": "fupdbes4"
+    },
+    {
+      "run_name": "grpo_vllm_server_tmp_3epoch_grpo",
+      "run_label": "vLLM server, tmp",
+      "run_id": "zcpzp8lp"
+    },
+    {
+      "run_name": "grpo_hf_3epoch_grpo",
+      "run_label": "HF generate",
+      "run_id": "gxjdrypi"
+    }
+  ],
+  "timing_metrics": [
+    "grpo/speed/step_time_sec",
+    "grpo/speed/sync_weights_time_sec",
+    "grpo/speed/rollout_time_sec"
+  ],
+  "aggregation": "mean over logged history rows"
+}
